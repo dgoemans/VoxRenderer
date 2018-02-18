@@ -1,3 +1,9 @@
+# models
+models/
+
+# dist
+dist/
+
 # Logs
 logs
 *.log

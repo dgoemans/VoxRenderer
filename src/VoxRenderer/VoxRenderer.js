@@ -5,6 +5,10 @@ import monotone from './MeshOptimizers/monotone';
 import stupid from './MeshOptimizers/stupid';
 import VoxLoader from './VoxLoader';
 
+import 'three/examples/js/shaders/DepthLimitedBlurShader.js'
+import 'three/examples/js/shaders/UnpackDepthRGBAShader.js'
+
+import 'three/examples/js/shaders/SAOShader.js'
 import 'three/examples/js/shaders/SSAOShader.js'
 import 'three/examples/js/shaders/CopyShader.js'
 import 'three/examples/js/shaders/BokehShader.js'
@@ -14,6 +18,7 @@ import 'three/examples/js/postprocessing/RenderPass.js'
 import 'three/examples/js/postprocessing/ShaderPass.js'
 import 'three/examples/js/postprocessing/MaskPass.js'
 import 'three/examples/js/postprocessing/SSAOPass.js'
+import 'three/examples/js/postprocessing/SAOPass.js'
 import 'three/examples/js/postprocessing/BokehPass.js'
 
 export default class VoxRenderer {
@@ -67,10 +72,15 @@ export default class VoxRenderer {
 
         this.initPostprocessing();
 
-        this.constructThreeScene('../models/monu1.vox');
+        this.addVoxelModel('../models/ephtracy.vox', new THREE.Vector3(0,0,0));
+        this.addVoxelModel('../models/bowl_bone2.vox', new THREE.Vector3(40,0,0));
+        this.addVoxelModel('../models/castle.vox', new THREE.Vector3(-40,0,0));
+        //this.addVoxelModel('../models/monu6.vox', new THREE.Vector3(-180,0,0));
+        this.addVoxelModel('../models/teapot.vox', new THREE.Vector3(80,0,0));
+        //this.addVoxelModel('../models/ground.vox', new THREE.Vector3(180,0,0));
     }
 
-    async constructThreeScene(path) {
+    async addVoxelModel(path, position) {
 
         const model = await new VoxLoader().load(path);
 
@@ -81,18 +91,12 @@ export default class VoxRenderer {
 
         const volume = [];
         let index = 0;
-        for(let y=0; y<model.SIZE.y; y++) {
-            volume[y,0,0] = [];
-            for(let z=0; z<model.SIZE.z; z++) {
-                volume[y,z,0] = [];
-                for(let x=0; x<model.SIZE.x; x++, index++) {
-                    volume[index] = 0;
-                }
-            }
-        }
         
         voxels.forEach(voxel => {
-            const index = voxel.x + voxel.z*model.SIZE.x + voxel.y*model.SIZE.z*model.SIZE.x;
+            if(voxel.c === 0) {
+                return;
+            }
+            const index = voxel.x + (voxel.z + voxel.y*model.SIZE.z)*model.SIZE.x;
             volume[index] = voxel.c;
         });
 
@@ -106,7 +110,52 @@ export default class VoxRenderer {
 
         console.log(volume);
 
-        const result = monotone(volume, [model.SIZE.y, model.SIZE.z, model.SIZE.x]);
+        const mesh = this.generateSimplifiedMesh(volume, materials, model.SIZE, stupid);
+        // const mesh = this.generateSimplifiedMesh(volume, materials, model.SIZE, monotone);
+        // const mesh = this.generateBoxMesh(voxels, materials);
+
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
+
+        this.scene.add(mesh);
+
+        console.log('Mesh ready');
+
+        mesh.position.copy(position);
+    }
+
+    generateBoxMesh(voxels, materials) {
+        const geometry = new THREE.Geometry();
+
+        voxels.forEach(voxel => {
+            if(voxel.c === 0) {
+                return;
+            }
+            const nextVoxel = new THREE.BoxGeometry(1,1,1,1);
+            nextVoxel.translate(voxel.x, voxel.z, voxel.y);
+            geometry.merge(nextVoxel, undefined, voxel.c);
+        });
+
+        geometry.mergeVertices();
+        geometry.computeFaceNormals();
+      
+        geometry.verticesNeedUpdate = true;
+        geometry.elementsNeedUpdate = true;
+        geometry.normalsNeedUpdate = true;
+        
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
+
+        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
+
+        const surfacemesh = new THREE.Mesh( bufferGeometry );
+        surfacemesh.material = materials;
+
+        return surfacemesh;
+    }
+
+    generateSimplifiedMesh(volume, materials, size, simplifyFunc) {
+        const result = simplifyFunc(volume, [size.y, size.z, size.x]);
 
         console.log(result);
 
@@ -121,7 +170,7 @@ export default class VoxRenderer {
         for(let i=0; i<result.faces.length; ++i) {
             const face = result.faces[i];
             const face3 = new THREE.Face3(face[0], face[1], face[2]);
-            face3.materialIndex = face[3];
+            face3.materialIndex = face[4] || face[3];
             face3.vertexColors = [face3.color,face3.color,face3.color];
             geometry.faces.push(face3);
         }
@@ -135,17 +184,11 @@ export default class VoxRenderer {
         geometry.computeBoundingBox();
         geometry.computeBoundingSphere();
 
-        const material = new THREE.MeshStandardMaterial({vertexColors: true, flatShading: true});
         const surfacemesh = new THREE.Mesh( geometry );
         surfacemesh.material = materials;
-        surfacemesh.doubleSided = false;
-        
-        surfacemesh.receiveShadow = true;
-        surfacemesh.castShadow = true;
+        surfacemesh.doubleSided = true;
 
-        this.scene.add(surfacemesh);        
-
-        console.log('Mesh ready');
+        return surfacemesh;
     }
 
     initPostprocessing() {
@@ -156,9 +199,9 @@ export default class VoxRenderer {
         const renderPass = new THREE.RenderPass( this.scene, this.camera );
         this.effectComposer.addPass( renderPass );
 
-        const ssaoConfig = { enabled: true, onlyAO: false, radius: 32, aoClamp: 0.25, lumInfluence: 0.7 };
+        const ssaoConfig = { enabled: true, onlyAO: false, radius: 3, aoClamp: 0.15, lumInfluence: 0.7 };
         const ssaoPass = new THREE.SSAOPass( this.scene, this.camera );
-        ssaoPass.onlyAO = ssaoConfig.onlyAO || true;
+        ssaoPass.onlyAO = ssaoConfig.onlyAO;
         ssaoPass.enabled = ssaoConfig.enabled;
         ssaoPass.radius = ssaoConfig.radius;
         ssaoPass.aoClamp = ssaoConfig.aoClamp;
@@ -167,16 +210,19 @@ export default class VoxRenderer {
         ssaoPass.renderToScreen = true;
         this.effectComposer.addPass( ssaoPass );
 
-        /*const bokehPass = new THREE.BokehPass( this.scene, this.camera, {
-            focus: 		5000.0,
+        const bokehPass = new THREE.BokehPass( this.scene, this.camera, {
+            focus: 		3000.0,
             aperture:	5.0,
-            maxblur:	0.005,
+            maxblur:	0.00,
             width: width,
             height: height
         } );
         bokehPass.renderToScreen = true;
-        this.effectComposer.addPass( bokehPass );*/
+        //this.effectComposer.addPass( bokehPass );
 
+        const saoPass = new THREE.SAOPass( this.scene, this.camera, false, true );
+        saoPass.renderToScreen = true;
+        //this.effectComposer.addPass(saoPass);
         
         var pixelRatio = this.renderer.getPixelRatio();
         var newWidth  = Math.floor( width / pixelRatio ) || 1;
@@ -189,7 +235,7 @@ export default class VoxRenderer {
     }
 
     render() {
-        this.effectComposer.render(0.1);
-        this.renderer.render( this.scene, this.camera );
+        this.effectComposer.render();
+        //this.renderer.render( this.scene, this.camera );
     }
 }

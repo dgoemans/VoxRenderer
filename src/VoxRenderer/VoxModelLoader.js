@@ -50,7 +50,7 @@ class VoxModelLoader {
                 opacity: color.a, 
                 metalness: 0, 
                 flatShading: false,
-                roughness: 0.5,
+                roughness: 1.0,
             });
 
             materials.push(material);

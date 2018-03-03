@@ -1,5 +1,7 @@
 # models
-models/
+ignoremodels/
+
+**/.DS_Store
 
 # dist
 dist/

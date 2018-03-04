@@ -4,7 +4,7 @@ import 'three/examples/js/libs/ammo';
 export default class Physics {
     constructor() {
 
-        const gravity = -10;
+        const gravity = -30;
         const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
         const dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
         const broadphase = new Ammo.btDbvtBroadphase();
@@ -58,7 +58,7 @@ export default class Physics {
     update( deltaTime ) {
         let transformAux1 = new Ammo.btTransform();
 
-        this.physicsWorld.stepSimulation( deltaTime, 10 );
+        this.physicsWorld.stepSimulation( deltaTime, 5 );
 
         const count = this.registeredObjects.length;
 

@@ -5,7 +5,8 @@ import PhysicsHelper from '../Physics/PhysicsHelper';
 export default class Lamp {
 
     constructor(parent, position, rotation) {
-        this.pointLight = new THREE.PointLight(0xcccccc, 1, 150, 2);
+        this.pointLight = new THREE.PointLight(0xffffff, 1, 150, 2);
+        this.pointLight.power = 17000;
         this.pointLight.castShadow = true;
         this.pointLight.shadow.bias = -0.0001;
         this.pointLight.shadow.radius = 15;

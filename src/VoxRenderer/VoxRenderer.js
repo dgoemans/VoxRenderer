@@ -1,14 +1,10 @@
 import * as THREE from 'three';
-import 'three/examples/js/controls/OrbitControls';
-import 'three/examples/js/modifiers/SimplifyModifier';
-import Lamp from './Objects/Lamp';
-import Road from './Objects/Road';
-import Ball from './Objects/Ball';
 
 import Postprocessing from './Postprocessing';
 import Physics from './Physics/Physics';
 import PhysicsHelper from './Physics/PhysicsHelper';
 import Level from './Level/Level';
+import Input from './Input';
 
 const SHADOW_REFRESH_TIME = 0.01;
 
@@ -17,25 +13,25 @@ export default class VoxRenderer {
     constructor() {
         this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 2048 );
 
-        this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+        this.renderer = new THREE.WebGLRenderer( { antialias: false } );
         this.renderer.setClearColor(0x05081f, 1);
         this.renderer.setSize( window.innerWidth, window.innerHeight );
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.autoUpdate = false;
+        this.renderer.powerPreference = 'high-performance';
+        this.renderer.gammaInput = true;
+        this.renderer.gammaOutput = true;
+        this.renderer.toneMapping = THREE.Uncharted2ToneMapping;
+        this.renderer.physicallyCorrectLights = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         this.physics = new Physics();
-        
-        this.controls = new THREE.OrbitControls( this.camera );
-        
-        this.camera.position.set(0, 90, 90);
-        this.camera.lookAt(new THREE.Vector3(0,0,0));
-
-        this.raycaster = new THREE.Raycaster();
 
         document.body.appendChild( this.renderer.domElement );
 
         this.level = new Level(this.renderer, this.physics);
+
+        this.input = new Input(this.camera, this.level);
 
         this.shadowRefreshTimer = SHADOW_REFRESH_TIME;
 
@@ -43,7 +39,7 @@ export default class VoxRenderer {
     }
 
     update(delta, totalElapsed) {
-        this.controls.update();
+        this.input.update(delta);
         this.physics.update(delta);
 
         this.level.update(delta, totalElapsed);

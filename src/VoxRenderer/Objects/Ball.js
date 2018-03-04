@@ -5,6 +5,7 @@ import PhysicsHelper from '../Physics/PhysicsHelper';
 export default class Ball {
 
     constructor(parent, position, rotation) {
+        this.onLoad = null;
         this.loadModel(parent, position, rotation);
     }
 
@@ -18,5 +19,7 @@ export default class Ball {
         mesh.userData.physicsCenter = center;
 
         parent.addToScene(mesh, 0.5, 1);
+
+        this.onLoad && this.onLoad(mesh);
     }
 }

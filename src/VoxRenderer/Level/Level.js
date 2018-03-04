@@ -12,10 +12,10 @@ export default class Level {
         this.renderer = renderer;
 
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2( 0x1f2125, 0.0035 );
+        this.scene.fog = new THREE.FogExp2( 0x1f2125, 0.0015 );
 
-        this.ambient = new THREE.AmbientLight(0xffffff, 0.3);
-        this.scene.add(this.ambient);
+        const light = new THREE.HemisphereLight( 0xfafaff, 0xffffff, 0.1 );
+        this.scene.add( light );
         
         const floorGeometry = new THREE.BoxGeometry(4096, 1, 4096);
         const {shape, center} = PhysicsHelper.createBox(floorGeometry);
@@ -25,6 +25,7 @@ export default class Level {
             flatShading: true,
             roughness: 1
         });
+
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.userData.physicsShape = shape;
         floor.userData.physicsCenter = center;
@@ -32,20 +33,27 @@ export default class Level {
         floor.position.set(0,-0.5,0);
         this.addToScene(floor, 0, 0.5);
 
-        new Lamp(this, new THREE.Vector3(-44.5,0, -44.5));
-        new Lamp(this, new THREE.Vector3(35.5,0, 35.5));
-        new Lamp(this, new THREE.Vector3(-44.5,0, -344.5));
-        new Lamp(this, new THREE.Vector3(35.5,0, -235.5));
-
+        
         for(let i=-480; i<480; i+=40) {
             new Road(this, new THREE.Vector3(-20, 0, i));            
         }
 
-        for(let i=-1000; i <= 1000; i+= 150) {
-            this.loadVox('building_1', new THREE.Vector3(-200,0,i));
-            this.loadVox('building_1', new THREE.Vector3(63,0,i));
+        this.addLamps();
+        this.addBuildings();
+    }
+
+    async addLamps() {
+        for(let i=-1000; i <= 1000; i+= 280) {
+            await new Lamp(this, new THREE.Vector3(-44.5,0, i - 44.5));
+            await new Lamp(this, new THREE.Vector3(35.5,0, i + 35.5));
         }
-        
+    }
+
+    async addBuildings() {
+        for(let i=-2000; i <= 2000; i+= 150) {
+            await this.loadVox('building_1', new THREE.Vector3(-200,0,i));
+            await this.loadVox('building_1', new THREE.Vector3(63,0,i));
+        }        
     }
 
     async loadVox(model, position, rotation) {
@@ -62,18 +70,17 @@ export default class Level {
         this.renderer.shadowMap.needsUpdate = true;
     }
 
-    addBall() {
-        const angle = Math.random() * Math.PI * 2
-        const radius = 20;
-        const x = radius*Math.cos(angle);
-        const z = radius*Math.sin(angle);
-        new Ball(this, new THREE.Vector3(x,105,z));
+    addBall(position) {
+        return new Ball(this, position);
     }
 
     update(delta, totalElapsed) {
-        
-        if(totalElapsed > 5 && totalElapsed < 30 && Math.random() < 0.05) {
-            this.addBall();
-        }
+        /*if(totalElapsed > 5 && totalElapsed < 30 && Math.random() < 0.05) {
+            const angle = Math.random() * Math.PI * 2
+            const radius = 20;
+            const x = radius*Math.cos(angle);
+            const z = radius*Math.sin(angle);
+            this.addBall(new THREE.Vector3(x,105,z));
+        }*/
     }
 }

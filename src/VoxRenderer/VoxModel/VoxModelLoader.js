@@ -9,6 +9,10 @@ import PhysicsHelper from '../Physics/PhysicsHelper';
 
 class VoxModelLoader {
 
+    static loadedGeometries = {
+
+    };
+
     parseVoxels(voxels, volumes, sizes, current) {
         const size = Array.isArray(sizes) ? sizes[current] : sizes;
         const volume = volumes[current];
@@ -24,49 +28,58 @@ class VoxModelLoader {
     }
 
     async load(path, position, rotation) {
-
-        const meshes = [];
-
         position = position || new THREE.Vector3(0,0,0);
         rotation = rotation || new THREE.Euler();
 
-        const model = await new VoxLoader().load(path);
+        let geometry, materials;
 
-        console.log('Loaded model',model);
+        if(!!VoxModelLoader.loadedGeometries[path]) {
+            geometry = VoxModelLoader.loadedGeometries[path].geometry;
+            materials = VoxModelLoader.loadedGeometries[path].materials;
+        } else {
+            const model = await new VoxLoader().load(path);
 
-        const palette = model.RGBA;
-        const voxels = model.XYZI;
-        const sizes = model.SIZE;
+            console.log('Loaded model',model);
 
-        const volumes = [[]];
-        let index = 0;
-        
-        this.parseVoxels(voxels, volumes, sizes, 0);
+            const palette = model.RGBA;
+            const voxels = model.XYZI;
+            const sizes = model.SIZE;
 
-        const materials = [];
+            const volumes = [[]];
+            let index = 0;
+            
+            this.parseVoxels(voxels, volumes, sizes, 0);
 
-        palette.forEach((color, index) => {
-            const diffuseColor = new THREE.Color(`rgb(${color.r}, ${color.g}, ${color.b})`);
-            const material = new THREE.MeshStandardMaterial({
-                color: diffuseColor, 
-                opacity: color.a, 
-                metalness: 0, 
-                flatShading: false,
-                roughness: 1.0,
+            materials = [];
+
+            palette.forEach((color, index) => {
+                const diffuseColor = new THREE.Color(`rgb(${color.r}, ${color.g}, ${color.b})`);
+                const material = new THREE.MeshPhysicalMaterial({
+                    color: diffuseColor, 
+                    opacity: color.a, 
+                    flatShading: true,
+                    roughness: 0.9,
+                    metalness: 0.1,
+                    clearCoat: 0.0,
+                    clearCoatRoughness: 0.5,
+                    reflectivity: 0.1
+                });
+
+                materials.push(material);
             });
 
-            materials.push(material);
-        });
+            console.log(volumes);
 
-        console.log(volumes);
+            geometry = new THREE.Geometry();
 
-        const geometry = new THREE.Geometry();
+            volumes.forEach((volume, index) => {
+                const size = Array.isArray(sizes) ? sizes[index] : sizes;
+                const nextGeo = this.createSimplifiedGeometry(volume, materials, size, monotone);
+                geometry.merge(nextGeo);
+            });
 
-        volumes.forEach((volume, index) => {
-            const size = Array.isArray(sizes) ? sizes[index] : sizes;
-            const nextGeo = this.createSimplifiedGeometry(volume, materials, size, monotone);
-            geometry.merge(nextGeo);
-        });
+            VoxModelLoader.loadedGeometries[path] = { geometry, materials };
+        }
         
         const { shape, center } = PhysicsHelper.createMesh(geometry);
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import VoxModelLoader from './VoxModelLoader';
-import PhysicsHelper from './PhysicsHelper';
+import VoxModelLoader from '../VoxModel/VoxModelLoader';
+import PhysicsHelper from '../Physics/PhysicsHelper';
 
 export default class Ball {
 
@@ -11,6 +11,11 @@ export default class Ball {
     async loadModel(parent, position, rotation) {
         const voxLoader = new VoxModelLoader();
         const mesh = await voxLoader.load('../models/ball.vox', position, rotation);
+
+        const {shape, center} = PhysicsHelper.createSphere(mesh.geometry);
+
+        mesh.userData.physicsShape = shape;
+        mesh.userData.physicsCenter = center;
 
         parent.addToScene(mesh, 0.5, 1);
     }

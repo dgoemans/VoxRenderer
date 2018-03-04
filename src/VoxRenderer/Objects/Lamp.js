@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import VoxModelLoader from './VoxModelLoader';
+import VoxModelLoader from '../VoxModel/VoxModelLoader';
+import PhysicsHelper from '../Physics/PhysicsHelper';
 
 export default class Lamp {
 
@@ -15,7 +16,7 @@ export default class Lamp {
     async loadModel(parent, position, rotation) {
         const voxLoader = new VoxModelLoader();
         const mesh = await voxLoader.load('../models/lamp.vox', position, rotation);
-        
+
         mesh.castShadow = true;
         mesh.material[2].emissive = new THREE.Color(0xffffff);
         mesh.material[2].metalness = 1;

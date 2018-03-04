@@ -68,7 +68,13 @@ export default class PhysicsHelper {
             true
         );
 
-        return shape;
+        if(!geometry.boundingBox) {
+            geometry.computeBoundingBox();
+        }
+
+        const center =  new THREE.Vector3(0,0,0);
+
+        return { shape, center };
     }
 
     static createSphere(geometry, margin = 0.05) {
@@ -80,7 +86,9 @@ export default class PhysicsHelper {
         var shape = new Ammo.btSphereShape(geometry.boundingSphere.radius);
         shape.setMargin( margin );
 
-        return shape;
+        const center =  geometry.center();
+
+        return { shape, center };
     }
 
     static createBox(geometry, margin = 0.05) {
@@ -91,9 +99,11 @@ export default class PhysicsHelper {
 
         const size = geometry.boundingBox.getSize();
 
+        const center =  geometry.center();
+
         var shape = new Ammo.btBoxShape( new Ammo.btVector3( size.x * 0.5, size.y * 0.5, size.z * 0.5 ) );
         shape.setMargin( margin );
 
-        return shape;
+        return { shape, center };
     }
 }

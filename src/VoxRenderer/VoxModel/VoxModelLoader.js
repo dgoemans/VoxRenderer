@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import VoxLoader from './VoxLoader';
 
-import monotone from './MeshOptimizers/monotone';
-import stupid from './MeshOptimizers/stupid';
-import greedy from './MeshOptimizers/greedy';
+import monotone from '../MeshOptimizers/monotone';
+import stupid from '../MeshOptimizers/stupid';
+import greedy from '../MeshOptimizers/greedy';
 
-import PhysicsHelper from './PhysicsHelper';
+import PhysicsHelper from '../Physics/PhysicsHelper';
 
 class VoxModelLoader {
 
@@ -67,15 +67,16 @@ class VoxModelLoader {
             const nextGeo = this.createSimplifiedGeometry(volume, materials, size, monotone);
             geometry.merge(nextGeo);
         });
-
-        const physicsShape = PhysicsHelper.createMesh(geometry);
+        
+        const { shape, center } = PhysicsHelper.createMesh(geometry);
 
         const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
 
         const mesh = new THREE.Mesh( geometry );
         mesh.material = materials;
 
-        mesh.userData.physicsShape = physicsShape;
+        mesh.userData.physicsShape = shape;
+        mesh.userData.physicsCenter = center;
 
         mesh.receiveShadow = true;
         mesh.castShadow = true;

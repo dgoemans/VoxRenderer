@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import VoxModelLoader from './VoxModelLoader';
+import VoxModelLoader from '../VoxModel/VoxModelLoader';
 
 export default class Road {
 
@@ -11,6 +11,6 @@ export default class Road {
         const voxLoader = new VoxModelLoader();
         const mesh = await voxLoader.load('../models/road.vox', position, rotation);
 
-        parent.addToScene(mesh, 0);
+        parent.addToScene(mesh, 0, 0.7);
     }
 }

@@ -4,7 +4,7 @@ import 'three/examples/js/libs/ammo';
 export default class Physics {
     constructor() {
 
-        const gravity = -9.8;
+        const gravity = -10;
         const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
         const dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
         const broadphase = new Ammo.btDbvtBroadphase();
@@ -24,18 +24,19 @@ export default class Physics {
     }
 
     createRigidBody( threeObject, mass, restitution) {
+        const physicsShape = threeObject.userData.physicsShape;
+        const center = threeObject.userData.physicsCenter;
         const pos = threeObject.position;
         const quat = threeObject.quaternion;
-
+        
         var transform = new Ammo.btTransform();
         transform.setIdentity();
-        transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+        transform.setOrigin( new Ammo.btVector3( center.x + pos.x, center.y + pos.y, center.z + pos.z ) );
         transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
         
         var motionState = new Ammo.btDefaultMotionState( transform );
         var localInertia = new Ammo.btVector3( 0, 0, 0 );
         
-        const physicsShape = threeObject.userData.physicsShape;
         physicsShape.calculateLocalInertia( mass, localInertia );
         
         var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
@@ -59,7 +60,6 @@ export default class Physics {
 
         this.physicsWorld.stepSimulation( deltaTime, 10 );
 
-        // Update rigid bodies
         const count = this.registeredObjects.length;
 
         for ( var i = 0; i < count; i++ ) {

@@ -10,15 +10,13 @@ import Physics from './Physics/Physics';
 import PhysicsHelper from './Physics/PhysicsHelper';
 import Level from './Level/Level';
 
-const SHADOW_REFRESH_TIME = 0.1;
+const SHADOW_REFRESH_TIME = 0.01;
 
 export default class VoxRenderer {
     
     constructor() {
         this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 2048 );
 
-        this.lightOffset = new THREE.Vector3(100,200,150);
-        
         this.renderer = new THREE.WebGLRenderer( { antialias: true } );
         this.renderer.setClearColor(0x05081f, 1);
         this.renderer.setSize( window.innerWidth, window.innerHeight );

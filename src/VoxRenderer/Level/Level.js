@@ -3,6 +3,7 @@ import Lamp from "../Objects/Lamp";
 import Ball from "../Objects/Ball";
 import Road from "../Objects/Road";
 import PhysicsHelper from '../Physics/PhysicsHelper';
+import VoxModelLoader from '../VoxModel/VoxModelLoader';
 
 export default class Level {
     constructor(renderer, physics) {
@@ -13,10 +14,10 @@ export default class Level {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2( 0x1f2125, 0.0035 );
 
-        this.ambient = new THREE.AmbientLight(0xffffff, 0.1);
+        this.ambient = new THREE.AmbientLight(0xffffff, 0.3);
         this.scene.add(this.ambient);
         
-        const floorGeometry = new THREE.BoxGeometry(1024, 1, 1024);
+        const floorGeometry = new THREE.BoxGeometry(4096, 1, 4096);
         const {shape, center} = PhysicsHelper.createBox(floorGeometry);
         const floorMaterial = new THREE.MeshStandardMaterial({
             color: 0x333333, 
@@ -39,6 +40,20 @@ export default class Level {
         for(let i=-480; i<480; i+=40) {
             new Road(this, new THREE.Vector3(-20, 0, i));            
         }
+
+        for(let i=-1000; i <= 1000; i+= 150) {
+            this.loadVox('building_1', new THREE.Vector3(-200,0,i));
+            this.loadVox('building_1', new THREE.Vector3(63,0,i));
+        }
+        
+    }
+
+    async loadVox(model, position, rotation) {
+        position = position || new THREE.Vector3();
+        rotation = rotation || new THREE.Euler();
+        const voxLoader = new VoxModelLoader();
+        const mesh = await voxLoader.load(`../models/${model}.vox`, position, rotation);
+        this.addToScene(mesh, 0);
     }
     
     addToScene(mesh, mass = 1, restitution = 0) {
@@ -57,7 +72,7 @@ export default class Level {
 
     update(delta, totalElapsed) {
         
-        if(totalElapsed > 5 && Math.random() < 0.05) {
+        if(totalElapsed > 5 && totalElapsed < 30 && Math.random() < 0.05) {
             this.addBall();
         }
     }

@@ -5,6 +5,8 @@ import monotone from './MeshOptimizers/monotone';
 import stupid from './MeshOptimizers/stupid';
 import greedy from './MeshOptimizers/greedy';
 
+import PhysicsHelper from './PhysicsHelper';
+
 class VoxModelLoader {
 
     parseVoxels(voxels, volumes, sizes, current) {
@@ -66,10 +68,14 @@ class VoxModelLoader {
             geometry.merge(nextGeo);
         });
 
+        const physicsShape = PhysicsHelper.createMesh(geometry);
+
         const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
 
         const mesh = new THREE.Mesh( geometry );
         mesh.material = materials;
+
+        mesh.userData.physicsShape = physicsShape;
 
         mesh.receiveShadow = true;
         mesh.castShadow = true;
@@ -79,7 +85,7 @@ class VoxModelLoader {
 
         return mesh;
     }
-
+    
     createSimplifiedGeometry(volume, materials, size, simplifyFunc) {
         const result = simplifyFunc(volume, [size.x, size.z, size.y]);
 

@@ -5,17 +5,10 @@ import VoxModelLoader from './VoxModelLoader';
 import Lamp from './Lamp';
 import Road from './Road';
 
-import 'three/examples/js/shaders/DepthLimitedBlurShader.js';
-import 'three/examples/js/shaders/UnpackDepthRGBAShader.js';
-
-import 'three/examples/js/shaders/SAOShader.js';
-import 'three/examples/js/shaders/CopyShader.js';
-
-import 'three/examples/js/postprocessing/EffectComposer.js';
-import 'three/examples/js/postprocessing/RenderPass.js';
-import 'three/examples/js/postprocessing/ShaderPass.js';
-import 'three/examples/js/postprocessing/MaskPass.js';
-import 'three/examples/js/postprocessing/SAOPass.js';
+import Postprocessing from './Postprocessing';
+import Physics from './Physics';
+import PhysicsHelper from './PhysicsHelper';
+import Ball from './Ball';
 
 export default class VoxRenderer {
     constructor() {
@@ -34,11 +27,13 @@ export default class VoxRenderer {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.autoUpdate = false;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        this.physics = new Physics();
         
         this.controls = new THREE.OrbitControls( this.camera );
         
         this.camera.position.set(0, 90, 90);
-        this.camera.lookAt(new THREE.Vector3(0,0,0))
+        this.camera.lookAt(new THREE.Vector3(0,0,0));
 
         this.ambient = new THREE.AmbientLight(0xffffff, 0.1);
         this.scene.add(this.ambient);
@@ -54,22 +49,23 @@ export default class VoxRenderer {
             new Road(this, new THREE.Vector3(-20, 0, i));            
         }
 
-        this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-60,0,50), new THREE.Euler(0,Math.PI, 0));
-        this.loadVoxModel('../ignoremodels/monu7.vox', new THREE.Vector3(-60,0,-70), new THREE.Euler(0,Math.PI, 0));
-        this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-250,0,-150), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-150,0,-250), new THREE.Euler(0,Math.PI/2, 0));
-        this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-30,-4,60), new THREE.Euler(0,-Math.PI/2, 0));
+        // this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-60,0,50), new THREE.Euler(0,Math.PI, 0));
+        // this.loadVoxModel('../ignoremodels/monu7.vox', new THREE.Vector3(-60,0,-70), new THREE.Euler(0,Math.PI, 0));
+        // this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-250,0,-150), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-150,0,-250), new THREE.Euler(0,Math.PI/2, 0));
+        // this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-30,-4,60), new THREE.Euler(0,-Math.PI/2, 0));
         
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,0), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-100), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-200), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-300), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,100), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-400), new THREE.Euler(0,0, 0));
-        this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-500), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,0), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-100), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-200), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-300), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,100), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-400), new THREE.Euler(0,0, 0));
+        // this.loadVoxModel('../ignoremodels/%23brick_wall.vox', new THREE.Vector3(-250,0,-500), new THREE.Euler(0,0, 0));
         
-        const floorGeometry = new THREE.PlaneBufferGeometry(1024, 1024, 128, 128);
-        floorGeometry.rotateX(-Math.PI/2);
+        const floorGeometry = new THREE.BoxGeometry(1024, 1, 1024);
+        const physicsShape = PhysicsHelper.createBox(floorGeometry);
+        //floorGeometry.rotateX(-Math.PI/2);
         const floorMaterial = new THREE.MeshStandardMaterial({
             color: 0x333333, 
             metalness: 0, 
@@ -77,13 +73,22 @@ export default class VoxRenderer {
             roughness: 1
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.userData.physicsShape = physicsShape;
         floor.receiveShadow = true;
-        this.scene.add(floor);
-        this.floor = floor;
+        floor.position.set(0,-0.5,0);
+        this.addToScene(floor, 0, 0.5);
 
         document.body.appendChild( this.renderer.domElement );
 
-        this.initPostprocessing();
+        this.postprocessingRenderer = new Postprocessing(this.renderer, this.camera, this.scene);
+    }
+
+    addBall() {
+        const angle = Math.random() * Math.PI * 2
+        const radius = 20;
+        const x = radius*Math.cos(angle);
+        const z = radius*Math.sin(angle);
+        new Ball(this, new THREE.Vector3(x,45,z));
     }
 
     async loadVoxModel(path, position, rotation) {
@@ -91,49 +96,22 @@ export default class VoxRenderer {
         this.addToScene(mesh);
     }
 
-    addToScene(mesh) {
+    addToScene(mesh, mass = 1, restitution = 0) {
         this.scene.add(mesh);
+        mesh.userData.physicsShape && this.physics.createRigidBody(mesh, mass, restitution);
         this.renderer.shadowMap.needsUpdate = true;
     }
 
-    initPostprocessing() {
-        const { width, height } = this.renderer.getSize();
-        
-        this.effectComposer = new THREE.EffectComposer( this.renderer );
-
-        const renderPass = new THREE.RenderPass( this.scene, this.camera );
-        this.effectComposer.addPass( renderPass );
-
-        var params = {
-            output: THREE.SAOPass.OUTPUT.Default,
-            saoBias: 0.1,
-            saoIntensity: 1.00,
-            saoScale: 900,
-            saoKernelRadius: 50,
-            saoMinResolution: 0.00025,
-            saoBlur: true,
-            saoBlurRadius: 25,
-            saoBlurStdDev: 5,
-            saoBlurDepthCutoff: 0.0001
-        }
-
-        const saoPass = new THREE.SAOPass(this.scene, this.camera, false, true);
-        saoPass.params = params;
-        saoPass.renderToScreen = true;
-        this.effectComposer.addPass(saoPass);
-
-        
-        var pixelRatio = this.renderer.getPixelRatio();
-        var newWidth  = Math.floor( width / pixelRatio ) || 1;
-        var newHeight = Math.floor( height / pixelRatio ) || 1;
-        this.effectComposer.setSize( newWidth, newHeight );
-    }
-
-    update() {
+    update(delta) {
         this.controls.update();
+        this.physics.update(delta);
+
+        if(Math.random() < 0.01) {
+            this.addBall();
+        }
     }
 
     render() {
-        this.effectComposer.render();
+        this.postprocessingRenderer.render();
     }
 }

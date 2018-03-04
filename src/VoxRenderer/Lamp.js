@@ -21,6 +21,6 @@ export default class Lamp {
         mesh.material[2].metalness = 1;
         mesh.material[2].roughness = 0;
 
-        parent.addToScene(mesh);
+        parent.addToScene(mesh, 0);
     }
 }

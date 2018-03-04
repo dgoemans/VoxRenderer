@@ -32,6 +32,7 @@ export default class VoxRenderer {
         this.renderer.setClearColor(0x05081f, 1);
         this.renderer.setSize( window.innerWidth, window.innerHeight );
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.autoUpdate = false;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         
         this.controls = new THREE.OrbitControls( this.camera );
@@ -44,13 +45,13 @@ export default class VoxRenderer {
 
         this.raycaster = new THREE.Raycaster();
 
-        new Lamp(this.scene, new THREE.Vector3(-44.5,0, -44.5));
-        new Lamp(this.scene, new THREE.Vector3(35.5,0, 35.5));
-        new Lamp(this.scene, new THREE.Vector3(-44.5,0, -344.5));
-        new Lamp(this.scene, new THREE.Vector3(35.5,0, -235.5));
+        new Lamp(this, new THREE.Vector3(-44.5,0, -44.5));
+        new Lamp(this, new THREE.Vector3(35.5,0, 35.5));
+        new Lamp(this, new THREE.Vector3(-44.5,0, -344.5));
+        new Lamp(this, new THREE.Vector3(35.5,0, -235.5));
 
         for(let i=-480; i<480; i+=40) {
-            new Road(this.scene, new THREE.Vector3(-20, 0, i));            
+            new Road(this, new THREE.Vector3(-20, 0, i));            
         }
 
         this.loadVoxModel('../ignoremodels/monu6.vox', new THREE.Vector3(-60,0,50), new THREE.Euler(0,Math.PI, 0));
@@ -86,11 +87,14 @@ export default class VoxRenderer {
     }
 
     async loadVoxModel(path, position, rotation) {
-        const meshes = await new VoxModelLoader().load(path, position, rotation);
-        meshes.forEach(mesh => this.scene.add(mesh));
+        const mesh = await new VoxModelLoader().load(path, position, rotation);
+        this.addToScene(mesh);
     }
 
-    
+    addToScene(mesh) {
+        this.scene.add(mesh);
+        this.renderer.shadowMap.needsUpdate = true;
+    }
 
     initPostprocessing() {
         const { width, height } = this.renderer.getSize();
@@ -102,7 +106,7 @@ export default class VoxRenderer {
 
         var params = {
             output: THREE.SAOPass.OUTPUT.Default,
-            saoBias: 0.3,
+            saoBias: 0.1,
             saoIntensity: 1.00,
             saoScale: 900,
             saoKernelRadius: 50,

@@ -58,52 +58,29 @@ class VoxModelLoader {
 
         console.log(volumes);
 
-        volumes.forEach((volume, index) => {
-            const size = Array.isArray(sizes) ? sizes[index] : sizes;
-            const mesh = this.generateSimplifiedMesh(volume, materials, size, monotone);
-            mesh.receiveShadow = true;
-            mesh.castShadow = true;
-    
-            mesh.position.copy(position);
-            mesh.rotation.copy(rotation);
-    
-            meshes.push(mesh);    
-        });
-
-        return meshes;
-    }
-
-    generateBoxMesh(voxels, materials) {
         const geometry = new THREE.Geometry();
 
-        voxels.forEach(voxel => {
-            if(voxel.c === 0) {
-                return;
-            }
-            const nextVoxel = new THREE.BoxGeometry(1,1,1,1);
-            nextVoxel.translate(voxel.x, voxel.z, voxel.y);
-            geometry.merge(nextVoxel, undefined, voxel.c);
+        volumes.forEach((volume, index) => {
+            const size = Array.isArray(sizes) ? sizes[index] : sizes;
+            const nextGeo = this.createSimplifiedGeometry(volume, materials, size, monotone);
+            geometry.merge(nextGeo);
         });
-
-        geometry.mergeVertices();
-        geometry.computeFaceNormals();
-      
-        geometry.verticesNeedUpdate = true;
-        geometry.elementsNeedUpdate = true;
-        geometry.normalsNeedUpdate = true;
-        
-        geometry.computeBoundingBox();
-        geometry.computeBoundingSphere();
 
         const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
 
-        const surfacemesh = new THREE.Mesh( bufferGeometry );
-        surfacemesh.material = materials;
+        const mesh = new THREE.Mesh( geometry );
+        mesh.material = materials;
 
-        return surfacemesh;
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
+
+        mesh.position.copy(position);
+        mesh.rotation.copy(rotation);
+
+        return mesh;
     }
 
-    generateSimplifiedMesh(volume, materials, size, simplifyFunc) {
+    createSimplifiedGeometry(volume, materials, size, simplifyFunc) {
         const result = simplifyFunc(volume, [size.x, size.z, size.y]);
 
         console.log(result);
@@ -133,11 +110,7 @@ class VoxModelLoader {
         geometry.computeBoundingBox();
         geometry.computeBoundingSphere();
 
-        const surfacemesh = new THREE.Mesh( geometry );
-        surfacemesh.material = materials;
-        surfacemesh.doubleSided = true;
-
-        return surfacemesh;
+        return geometry;
     }
 }
 

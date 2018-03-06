@@ -7,6 +7,7 @@ import PhysicsHelper from '../Physics/PhysicsHelper';
 import VoxModelLoader from '../VoxModel/VoxModelLoader';
 
 import SimplexNoise from 'simplex-noise';
+import TreeGrid from '../Objects/TreeGrid';
 
 export default class Level {
     constructor(renderer, physics) {
@@ -24,16 +25,31 @@ export default class Level {
 
         var simplex = new SimplexNoise(Math.random);
         
-        floorGeometry.vertices.forEach(vert => {
+        floorGeometry.faces.forEach(face => {
+
+            const vertA = floorGeometry.vertices[face.a];
+            const vertB = floorGeometry.vertices[face.b];
+            const vertC = floorGeometry.vertices[face.c];
+
+            const vert = new THREE.Vector3();
+            vert.addVectors(vertA, vertB);
+            vert.divideScalar(2);
+
             const exponent = 0.79;
             const scale = 100;
-            const e = 1 * simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale)
-                + 0.5 * simplex.noise2D(2 * vert.x/scale, 2 * vert.y/scale)
-                + 0.25 * simplex.noise2D(4 * vert.x/scale, 4 * vert.y/scale);
+            const e = 1 * simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale) +
+                0.5 * simplex.noise2D(2 * vert.x/scale, 2 * vert.y/scale) +
+                0.25 * simplex.noise2D(4 * vert.x/scale, 4 * vert.y/scale);
 
-            vert.z = e*15;
-            //vert.z = Math.pow(e, exponent) * 5;
+            vertA.z = vertB.z = vertC.z = e*7;
+
+            let value = (simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale) + Math.random())/2;
+
+            if(value > 0.7) {
+                new TreeGrid(this, new THREE.Vector3(vertA.x, vertA.z, -vertA.y));
+            }
         });
+
         //const {shape, center} = PhysicsHelper.createBox(floorGeometry);
         const floorMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x33dd33, 
@@ -55,8 +71,9 @@ export default class Level {
             reflectivity: 0.0
         });
 
-        const floor = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
-        this.addToScene(floor, 0, 0.5);
+        this.floor = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
+        this.floor.rotateX(-Math.PI/2);
+        this.addToScene(this.floor, 0, 0.5);
     }
 
     async addLamps() {

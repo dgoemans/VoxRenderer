@@ -51,11 +51,8 @@ export default class Input {
             this.collisionObject.userData.physicsCenter = center;
             level.addToScene(this.collisionObject, 100, 0.5);
         } else {
-            const center = new THREE.Vector3(0,100,100);
-            const lookat = new THREE.Vector3(0,0,0);
-    
-            camera.position.copy(center);
-            camera.lookAt(lookat);
+            camera.position.set(0,100,100);
+            camera.lookAt(0,0,0);
 
             document.addEventListener( 'keydown', this.onKeyDown, false );
             document.addEventListener( 'keyup', this.onKeyUp, false );
@@ -149,7 +146,7 @@ export default class Input {
         const array = this.getMousePosition(document.body, event.clientX, event.clientY);
         const onClickPosition = new THREE.Vector2();
         onClickPosition.fromArray( array );
-        const intersects = this.getIntersects(onClickPosition, this.level.scene.children);
+        const intersects = this.getIntersects(onClickPosition, this.level.floor);
         if (intersects.length > 0) {
 
             if(this.currentIntersection) {
@@ -179,9 +176,6 @@ export default class Input {
                 geometry: geometry,
                 face:  face
             }
-
-            //intersects[0].object.material.map.transformUv( uv );
-            //canvas.setCrossPosition( uv.x, uv.y );
         }
     }
 
@@ -190,10 +184,10 @@ export default class Input {
         return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
     }
 
-    getIntersects(point, objects) {
+    getIntersects(point, object) {
         const mouse = new THREE.Vector2((point.x * 2) - 1, -(point.y * 2) + 1);
         this.raycaster.setFromCamera(mouse, this.camera);
-        return this.raycaster.intersectObjects(objects);
+        return this.raycaster.intersectObject(object);
     }
 
     update(delta) {

@@ -30,6 +30,7 @@
     "fetch-polyfill": "^0.8.2",
     "file-loader": "^1.1.6",
     "parse-magica-voxel": "^1.0.3",
+    "simplex-noise": "^2.4.0",
     "style-loader": "^0.19.0",
     "webpack": "^3.11.0"
   },

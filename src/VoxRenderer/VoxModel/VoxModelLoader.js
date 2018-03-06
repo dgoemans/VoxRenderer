@@ -39,8 +39,6 @@ class VoxModelLoader {
         } else {
             const model = await new VoxLoader().load(path);
 
-            console.log('Loaded model',model);
-
             const palette = model.RGBA;
             const voxels = model.XYZI;
             const sizes = model.SIZE;
@@ -67,8 +65,6 @@ class VoxModelLoader {
 
                 materials.push(material);
             });
-
-            console.log(volumes);
 
             geometry = new THREE.Geometry();
 
@@ -102,8 +98,6 @@ class VoxModelLoader {
     
     createSimplifiedGeometry(volume, materials, size, simplifyFunc) {
         const result = simplifyFunc(volume, [size.x, size.z, size.y]);
-
-        console.log(result);
 
         const geometry = new THREE.Geometry();
         geometry.vertices.length = 0;

@@ -2,8 +2,11 @@ import * as THREE from 'three';
 import Lamp from "../Objects/Lamp";
 import Ball from "../Objects/Ball";
 import Road from "../Objects/Road";
+import Tree from "../Objects/Tree";
 import PhysicsHelper from '../Physics/PhysicsHelper';
 import VoxModelLoader from '../VoxModel/VoxModelLoader';
+
+import SimplexNoise from 'simplex-noise';
 
 export default class Level {
     constructor(renderer, physics) {
@@ -14,32 +17,46 @@ export default class Level {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2( 0x1f2125, 0.0015 );
 
-        const light = new THREE.HemisphereLight( 0xfafaff, 0xffffff, 0.1 );
+        const light = new THREE.HemisphereLight( 0xfafaff, 0xffffff, 0.5 );
         this.scene.add( light );
+
+        const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+
+        var simplex = new SimplexNoise(Math.random);
         
-        const floorGeometry = new THREE.BoxGeometry(4096, 1, 4096);
-        const {shape, center} = PhysicsHelper.createBox(floorGeometry);
-        const floorMaterial = new THREE.MeshStandardMaterial({
-            color: 0x333333, 
-            metalness: 0, 
+        floorGeometry.vertices.forEach(vert => {
+            const exponent = 0.79;
+            const scale = 100;
+            const e = 1 * simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale)
+                + 0.5 * simplex.noise2D(2 * vert.x/scale, 2 * vert.y/scale)
+                + 0.25 * simplex.noise2D(4 * vert.x/scale, 4 * vert.y/scale);
+
+            vert.z = e*15;
+            //vert.z = Math.pow(e, exponent) * 5;
+        });
+        //const {shape, center} = PhysicsHelper.createBox(floorGeometry);
+        const floorMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x33dd33, 
             flatShading: true,
-            roughness: 1
+            roughness: 1.0,
+            metalness: 0.0,
+            clearCoat: 0.0,
+            clearCoatRoughness: 1.0,
+            reflectivity: 0.0
         });
 
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.userData.physicsShape = shape;
-        floor.userData.physicsCenter = center;
-        floor.receiveShadow = true;
-        floor.position.set(0,-0.5,0);
+        const floorHighlightMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x55ff55, 
+            flatShading: true,
+            roughness: 1.0,
+            metalness: 0.0,
+            clearCoat: 0.0,
+            clearCoatRoughness: 1.0,
+            reflectivity: 0.0
+        });
+
+        const floor = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
         this.addToScene(floor, 0, 0.5);
-
-        
-        for(let i=-480; i<480; i+=40) {
-            new Road(this, new THREE.Vector3(-20, 0, i));            
-        }
-
-        this.addLamps();
-        this.addBuildings();
     }
 
     async addLamps() {

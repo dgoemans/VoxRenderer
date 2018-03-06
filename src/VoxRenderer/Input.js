@@ -1,15 +1,19 @@
 import * as THREE from 'three';
 import 'three/examples/js/controls/PointerLockControls';
+import 'three/examples/js/controls/OrbitControls';
 import 'three/examples/js/libs/ammo';
 
 export default class Input {
     constructor(camera, level) {
 
         this.level = level;
+        this.type = 'OrbitControls';
+        this.camera = camera;
 
-        this.controls = new THREE.PointerLockControls(camera);
-        this.controls.enabled = false;
-
+        this.controls = new THREE[this.type](camera);
+        
+        this.raycaster = new THREE.Raycaster();
+    
         this.movement = {
             forward: false,
             backward: false,
@@ -17,33 +21,48 @@ export default class Input {
             right: false
         }
 
-        this.canJump = true;
+        if(this.type === 'PointerLockControls') {
+            this.controls.enabled = false;
+    
+            this.canJump = true;
+    
+            this.velocity = new THREE.Vector3();
+            this.direction = new THREE.Vector3();
+            
+            document.addEventListener( 'keydown', this.onKeyDown, false );
+            document.addEventListener( 'keyup', this.onKeyUp, false );                
+            
+            document.addEventListener( 'pointerlockchange', this.pointerLockChange, false );
+            document.addEventListener( 'mozpointerlockchange', this.pointerLockChange, false );
+            document.addEventListener( 'webkitpointerlockchange', this.pointerLockChange, false );
+            document.addEventListener( 'click', this.acquirePointerLock, false );
+    
+            this.level.scene.add(this.controls.getObject());
+            const center = new THREE.Vector3(0,6,0);
+            const lookat = new THREE.Vector3(0,6,-1);
+    
+            camera.position.copy(center);
+            camera.lookAt(lookat);
+    
+            const shape = new Ammo.btCapsuleShape(6, 20);
+            this.collisionObject = new THREE.Object3D();
+    
+            this.collisionObject.userData.physicsShape = shape;
+            this.collisionObject.userData.physicsCenter = center;
+            level.addToScene(this.collisionObject, 100, 0.5);
+        } else {
+            const center = new THREE.Vector3(0,100,100);
+            const lookat = new THREE.Vector3(0,0,0);
+    
+            camera.position.copy(center);
+            camera.lookAt(lookat);
 
-        this.raycaster = new THREE.Raycaster();
-        this.velocity = new THREE.Vector3();
-        this.direction = new THREE.Vector3();
-        
-        document.addEventListener( 'keydown', this.onKeyDown, false );
-        document.addEventListener( 'keyup', this.onKeyUp, false );                
-        
-        document.addEventListener( 'pointerlockchange', this.pointerLockChange, false );
-        document.addEventListener( 'mozpointerlockchange', this.pointerLockChange, false );
-        document.addEventListener( 'webkitpointerlockchange', this.pointerLockChange, false );
-        document.addEventListener( 'click', this.acquirePointerLock, false );
+            document.addEventListener( 'keydown', this.onKeyDown, false );
+            document.addEventListener( 'keyup', this.onKeyUp, false );
+            document.addEventListener( 'mousemove', this.onMousMove, false );
 
-        this.level.scene.add(this.controls.getObject());
-        const center = new THREE.Vector3(0,6,0);
-        const lookat = new THREE.Vector3(0,6,-1);
-
-        camera.position.copy(center);
-        camera.lookAt(lookat);
-
-        const shape = new Ammo.btCapsuleShape(6, 20);
-        this.collisionObject = new THREE.Object3D();
-
-        this.collisionObject.userData.physicsShape = shape;
-        this.collisionObject.userData.physicsCenter = center;
-        level.addToScene(this.collisionObject, 100, 0.5);
+            this.currentIntersection = null;
+        }
     }
 
     acquirePointerLock = (event) => {
@@ -125,9 +144,60 @@ export default class Input {
         }
     }
 
+    onMousMove = (event) => {
+        event.preventDefault();
+        const array = this.getMousePosition(document.body, event.clientX, event.clientY);
+        const onClickPosition = new THREE.Vector2();
+        onClickPosition.fromArray( array );
+        const intersects = this.getIntersects(onClickPosition, this.level.scene.children);
+        if (intersects.length > 0) {
+
+            if(this.currentIntersection) {
+                this.currentIntersection.face.materialIndex = 0;
+                this.currentIntersection.geometry.groupsNeedUpdate = true;
+                this.currentIntersection.geometry.verticesNeedUpdate = true;
+            }
+
+            const mesh = intersects[0].object;
+            const geometry = mesh.geometry;
+            const face = geometry.faces[intersects[0].faceIndex];
+           
+            face.materialIndex = 1;
+
+            
+            if(this.movement.forward) {
+                geometry.vertices[face.a].z += 0.1;
+                geometry.vertices[face.b].z += 0.1;
+                geometry.vertices[face.c].z += 0.1;
+            }
+
+            mesh.geometry.verticesNeedUpdate = true;
+            mesh.geometry.groupsNeedUpdate = true;
+
+
+            this.currentIntersection = {
+                geometry: geometry,
+                face:  face
+            }
+
+            //intersects[0].object.material.map.transformUv( uv );
+            //canvas.setCrossPosition( uv.x, uv.y );
+        }
+    }
+
+    getMousePosition(dom, x, y) {
+        var rect = dom.getBoundingClientRect();
+        return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
+    }
+
+    getIntersects(point, objects) {
+        const mouse = new THREE.Vector2((point.x * 2) - 1, -(point.y * 2) + 1);
+        this.raycaster.setFromCamera(mouse, this.camera);
+        return this.raycaster.intersectObjects(objects);
+    }
 
     update(delta) {
-        if (this.controls.enabled) {
+        if (this.type === 'PointerLockControls' && this.controls.enabled) {
 
             const object = this.controls.getObject();
             this.raycaster.ray.origin.copy( this.controls.getObject().position );
@@ -166,8 +236,19 @@ export default class Input {
 
             this.collisionObject.userData.physicsBody.setCenterOfMassTransform(transform);
             this.collisionObject.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(this.velocity.x, this.velocity.y, this.velocity.z));
+        } else {
+            this.controls.update();
 
-            console.log(this.collisionObject.userData.physicsBody.getCollisionFlags());
+            if(this.movement.forward && this.currentIntersection) {
+                this.currentIntersection.geometry.vertices[this.currentIntersection.face.a].z += 0.1;
+                this.currentIntersection.geometry.vertices[this.currentIntersection.face.b].z += 0.1;
+                this.currentIntersection.geometry.vertices[this.currentIntersection.face.c].z += 0.1;
+
+                this.currentIntersection.geometry.verticesNeedUpdate = true;
+                this.currentIntersection.geometry.groupsNeedUpdate = true;
+            }
+
+            
         }
     }
 }

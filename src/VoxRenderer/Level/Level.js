@@ -25,28 +25,36 @@ export default class Level {
 
         var simplex = new SimplexNoise(Math.random);
         
-        floorGeometry.faces.forEach(face => {
+        floorGeometry.vertices.forEach(vert => {
 
-            const vertA = floorGeometry.vertices[face.a];
-            const vertB = floorGeometry.vertices[face.b];
-            const vertC = floorGeometry.vertices[face.c];
+            const faceCenter = new THREE.Vector3();
 
-            const vert = new THREE.Vector3();
-            vert.addVectors(vertA, vertB);
-            vert.divideScalar(2);
+            faceCenter.copy(vert);
+
+            if(vert.x % 20 === 0) {
+                faceCenter.x += 5;
+            } else {
+                faceCenter.x -= 5;
+            }
+
+            if(vert.y % 20 === 0) {
+                faceCenter.y += 5;
+            } else {
+                faceCenter.y -= 5;
+            }
 
             const exponent = 0.79;
             const scale = 100;
-            const e = 1 * simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale) +
-                0.5 * simplex.noise2D(2 * vert.x/scale, 2 * vert.y/scale) +
-                0.25 * simplex.noise2D(4 * vert.x/scale, 4 * vert.y/scale);
+            const e = 1 * simplex.noise2D(1 * faceCenter.x/scale, 1 * faceCenter.y/scale) +
+                0.5 * simplex.noise2D(2 * faceCenter.x/scale, 2 * faceCenter.y/scale) +
+                0.25 * simplex.noise2D(4 * faceCenter.x/scale, 4 * faceCenter.y/scale);
 
-            vertA.z = vertB.z = vertC.z = e*7;
+            vert.z = e*7;
 
-            let value = (simplex.noise2D(1 * vert.x/scale, 1 * vert.y/scale) + Math.random())/2;
+            let value = (simplex.noise2D(1 * faceCenter.x/scale, 1 * faceCenter.y/scale) + Math.random())/2;
 
             if(value > 0.7) {
-                new TreeGrid(this, new THREE.Vector3(vertA.x, vertA.z, -vertA.y));
+                new TreeGrid(this, new THREE.Vector3(vert.x, vert.z, -vert.y));
             }
         });
 

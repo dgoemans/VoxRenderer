@@ -8,6 +8,7 @@ import VoxModelLoader from '../VoxModel/VoxModelLoader';
 
 import SimplexNoise from 'simplex-noise';
 import TreeGrid from '../Objects/TreeGrid';
+import Terrain from '../Objects/Terrain';
 
 export default class Level {
     constructor(renderer, physics) {
@@ -21,67 +22,8 @@ export default class Level {
         const light = new THREE.HemisphereLight( 0xfafaff, 0xffffff, 0.5 );
         this.scene.add( light );
 
-        const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
-
-        var simplex = new SimplexNoise(Math.random);
-        
-        floorGeometry.vertices.forEach(vert => {
-
-            const faceCenter = new THREE.Vector3();
-
-            faceCenter.copy(vert);
-
-            if(vert.x % 20 === 0) {
-                faceCenter.x += 5;
-            } else {
-                faceCenter.x -= 5;
-            }
-
-            if(vert.y % 20 === 0) {
-                faceCenter.y += 5;
-            } else {
-                faceCenter.y -= 5;
-            }
-
-            const exponent = 0.79;
-            const scale = 100;
-            const e = 1 * simplex.noise2D(1 * faceCenter.x/scale, 1 * faceCenter.y/scale) +
-                0.5 * simplex.noise2D(2 * faceCenter.x/scale, 2 * faceCenter.y/scale) +
-                0.25 * simplex.noise2D(4 * faceCenter.x/scale, 4 * faceCenter.y/scale);
-
-            vert.z = e*7;
-
-            let value = (simplex.noise2D(1 * faceCenter.x/scale, 1 * faceCenter.y/scale) + Math.random())/2;
-
-            if(value > 0.7) {
-                new TreeGrid(this, new THREE.Vector3(vert.x, vert.z, -vert.y));
-            }
-        });
-
-        //const {shape, center} = PhysicsHelper.createBox(floorGeometry);
-        const floorMaterial = new THREE.MeshPhysicalMaterial({
-            color: 0x33dd33, 
-            flatShading: true,
-            roughness: 1.0,
-            metalness: 0.0,
-            clearCoat: 0.0,
-            clearCoatRoughness: 1.0,
-            reflectivity: 0.0
-        });
-
-        const floorHighlightMaterial = new THREE.MeshPhysicalMaterial({
-            color: 0x55ff55, 
-            flatShading: true,
-            roughness: 1.0,
-            metalness: 0.0,
-            clearCoat: 0.0,
-            clearCoatRoughness: 1.0,
-            reflectivity: 0.0
-        });
-
-        this.floor = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
-        this.floor.rotateX(-Math.PI/2);
-        this.addToScene(this.floor, 0, 0.5);
+        const terrain = new Terrain(this);
+        this.floor = terrain.floor;
     }
 
     async addLamps() {

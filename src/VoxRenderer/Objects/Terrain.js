@@ -10,71 +10,28 @@ export default class Terrain {
         const tilesWide = 100;
         const tilesHigh = 100;
 
-        const tileSize = 10;
+        this.tileSize = 10;
 
-        const totalWidth = tileSize * tilesWide;
-        const totalHeight = tileSize * tilesHigh;
+        const totalWidth = this.tileSize * tilesWide;
+        const totalHeight = this.tileSize * tilesHigh;
 
         var simplex = new SimplexNoise(Math.random);
         const geometry = new THREE.Geometry();
 
         let index = 0;
 
-        // for(let y=0; y<tilesHigh; y++) {
-        //     this.grid[y] = [];
-        //     for(let x=0; x<tilesWide; x++) {
-        //         const height = 1 * simplex.noise2D(1 * x, 1 * y) +
-        //             0.5 * simplex.noise2D(2 * x, 2 * y) +
-        //             0.25 * simplex.noise2D(4 * x, 4 * y);
+        const floorGeometry = new THREE.PlaneGeometry(totalWidth, totalHeight, tilesWide, tilesHigh);
+        floorGeometry.faces.forEach((face, index) => {
 
-        //         const value = (simplex.noise2D(1 * x, 1 * y) + Math.random())/2;
+            const faceCenter = new THREE.Vector3(0,0,0).add(floorGeometry.vertices[face.a])
+                .add(floorGeometry.vertices[face.b])
+                .add(floorGeometry.vertices[face.c])
+                .divideScalar(3);
 
-        //         let decor = null;
-        //         if(value > 0.7) {
-        //             decor = new TreeGrid(level, new THREE.Vector3(-totalWidth/2 + x*tileSize, height, -totalHeight/2 + y*tileSize));
-        //         }
-
-        //         // TODO: these in pairs.
-        //         geometry.vertices.push( new THREE.Vector3( -totalWidth/2 + x*tileSize, height, -totalHeight/2 + y*tileSize ) );
-        //         geometry.vertices.push( new THREE.Vector3( -totalWidth/2 + (x+1)*tileSize, height, -totalHeight/2 + y*tileSize ) );
-        //         geometry.vertices.push( new THREE.Vector3( -totalWidth/2 + (x+1)*tileSize, height, -totalHeight/2 + (y+1)*tileSize ) );
-        //         geometry.vertices.push( new THREE.Vector3( -totalWidth/2 + x*tileSize, height, -totalHeight/2 + (y+1)*tileSize ) );
-                
-        //         const face1 = new THREE.Face3(index, index+1, index+2);
-        //         geometry.faces.push(face1);
-        //         const face2 = new THREE.Face3(index, index+3, index+1);
-        //         geometry.faces.push(face2);
-
-        //         index += 4;
-
-        //         this.grid[y][x] = {
-        //             decor: decor,
-        //             height: height,
-        //         };
-        //     }
-        // }
-
-        // geometry.computeFaceNormals();
-        // geometry.computeVertexNormals();
-
-        const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
-        floorGeometry.vertices.forEach(vert => {
-
-            const faceCenter = new THREE.Vector3();
-
-            faceCenter.copy(vert);
-
-            if(vert.x % 20 === 0) {
-                faceCenter.x += 5;
-            } else {
-                faceCenter.x -= 5;
-            }
-
-            if(vert.y % 20 === 0) {
-                faceCenter.y += 5;
-            } else {
-                faceCenter.y -= 5;
-            }
+            faceCenter.divideScalar(this.tileSize);
+            faceCenter.x = Math.floor(faceCenter.x);
+            faceCenter.y = -Math.floor(faceCenter.y) - 1;
+            faceCenter.multiplyScalar(this.tileSize);
 
             const exponent = 0.79;
             const scale = 100;
@@ -82,13 +39,16 @@ export default class Terrain {
                 0.5 * simplex.noise2D(2 * faceCenter.x/scale, 2 * faceCenter.y/scale) +
                 0.25 * simplex.noise2D(4 * faceCenter.x/scale, 4 * faceCenter.y/scale);
             
-            vert.z = e*7;
+            const height = e*7;
+            floorGeometry.vertices[face.a].z = height;
+            floorGeometry.vertices[face.b].z = height;
+            floorGeometry.vertices[face.c].z = height;
 
             const value = (simplex.noise2D(1 * faceCenter.x/scale, 1 * faceCenter.y/scale) + Math.random())/2;
 
             let decor = null;
             if(value > 0.7) {
-                decor = new TreeGrid(level, new THREE.Vector3(vert.x, vert.z, -vert.y));
+                decor = new TreeGrid(level, new THREE.Vector3(faceCenter.x, faceCenter.z, faceCenter.y));
             }
 
 
@@ -96,9 +56,12 @@ export default class Terrain {
             if(!this.grid[faceCenter.y][faceCenter.x]) {
                 this.grid[faceCenter.y][faceCenter.x] = {
                     decor: decor,
-                    height: vert.z,
+                    height: height,
+                    faces: []
                 };
             }
+
+            this.grid[faceCenter.y][faceCenter.x].faces.push(index);
         });
 
         const floorMaterial = new THREE.MeshPhysicalMaterial({
@@ -121,9 +84,22 @@ export default class Terrain {
             reflectivity: 0.0
         });
 
-        this.floor = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
-        this.floor.rotateX(-Math.PI/2);
+        this.mesh = new THREE.Mesh(floorGeometry, [floorMaterial, floorHighlightMaterial]);
+        this.mesh.rotateX(-Math.PI/2);
 
-        level.addToScene(this.floor, 0, 0.5);
+        level.addToScene(this.mesh, 0, 0.5);
+    }
+
+    getGrid(x,y) {
+
+        x /= this.tileSize;
+        x = Math.floor(x);
+        x *= this.tileSize;
+
+        y /= this.tileSize;
+        y = Math.floor(y);
+        y *= this.tileSize;
+
+        return this.grid[y][x];
     }
 }

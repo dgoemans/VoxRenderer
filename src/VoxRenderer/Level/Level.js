@@ -22,8 +22,7 @@ export default class Level {
         const light = new THREE.HemisphereLight( 0xfafaff, 0xffffff, 0.5 );
         this.scene.add( light );
 
-        const terrain = new Terrain(this);
-        this.floor = terrain.floor;
+        this.terrain = new Terrain(this);
     }
 
     async addLamps() {

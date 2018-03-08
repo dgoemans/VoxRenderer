@@ -143,49 +143,37 @@ export default class Input {
 
     onMousMove = (event) => {
         event.preventDefault();
-        const array = this.getMousePosition(document.body, event.clientX, event.clientY);
-        const onClickPosition = new THREE.Vector2();
-        onClickPosition.fromArray( array );
-        const intersects = this.getIntersects(onClickPosition, this.level.floor);
-        if (intersects.length > 0) {
 
-            if(this.currentIntersection) {
-                this.currentIntersection.face.materialIndex = 0;
-                this.currentIntersection.geometry.groupsNeedUpdate = true;
-                this.currentIntersection.geometry.verticesNeedUpdate = true;
-            }
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        const intersects = this.getIntersects(mouse, this.level.terrain.mesh);
+        if (intersects.length > 0) {
 
             const mesh = intersects[0].object;
             const geometry = mesh.geometry;
-            const face = geometry.faces[intersects[0].faceIndex];
-           
-            face.materialIndex = 1;
 
-            
-            if(this.movement.forward) {
-                geometry.vertices[face.a].z += 0.1;
-                geometry.vertices[face.b].z += 0.1;
-                geometry.vertices[face.c].z += 0.1;
+            if(this.currentIntersection) {
+                this.currentIntersection.grid.faces.forEach(face => geometry.faces[face].materialIndex = 0);
+                this.currentIntersection.geometry.groupsNeedUpdate = true;
             }
+
+            const grid = this.level.terrain.getGrid(intersects[0].point.x, intersects[0].point.z);
+
+            grid.faces.forEach(face => geometry.faces[face].materialIndex = 1);
 
             mesh.geometry.verticesNeedUpdate = true;
             mesh.geometry.groupsNeedUpdate = true;
 
-
             this.currentIntersection = {
                 geometry: geometry,
-                face:  face
+                grid:  grid
             }
         }
     }
 
-    getMousePosition(dom, x, y) {
-        var rect = dom.getBoundingClientRect();
-        return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
-    }
-
-    getIntersects(point, object) {
-        const mouse = new THREE.Vector2((point.x * 2) - 1, -(point.y * 2) + 1);
+    getIntersects(mouse, object) {
         this.raycaster.setFromCamera(mouse, this.camera);
         return this.raycaster.intersectObject(object);
     }
@@ -239,7 +227,6 @@ export default class Input {
                 this.currentIntersection.geometry.vertices[this.currentIntersection.face.c].z += 0.1;
 
                 this.currentIntersection.geometry.verticesNeedUpdate = true;
-                this.currentIntersection.geometry.groupsNeedUpdate = true;
             }
 
             

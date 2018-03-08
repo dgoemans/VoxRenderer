@@ -7,10 +7,12 @@ export default class Input {
     constructor(camera, level) {
 
         this.level = level;
-        this.type = 'OrbitControls';
         this.camera = camera;
 
-        this.controls = new THREE[this.type](camera);
+        this.riseTime = 0.2;
+        this.riseTimer = this.riseTime;
+        
+        this.controls = new THREE.OrbitControls(camera);
         
         this.raycaster = new THREE.Raycaster();
     
@@ -19,80 +21,20 @@ export default class Input {
             backward: false,
             left: false,
             right: false
-        }
+        };
 
-        if(this.type === 'PointerLockControls') {
-            this.controls.enabled = false;
-    
-            this.canJump = true;
-    
-            this.velocity = new THREE.Vector3();
-            this.direction = new THREE.Vector3();
-            
-            document.addEventListener( 'keydown', this.onKeyDown, false );
-            document.addEventListener( 'keyup', this.onKeyUp, false );                
-            
-            document.addEventListener( 'pointerlockchange', this.pointerLockChange, false );
-            document.addEventListener( 'mozpointerlockchange', this.pointerLockChange, false );
-            document.addEventListener( 'webkitpointerlockchange', this.pointerLockChange, false );
-            document.addEventListener( 'click', this.acquirePointerLock, false );
-    
-            this.level.scene.add(this.controls.getObject());
-            const center = new THREE.Vector3(0,6,0);
-            const lookat = new THREE.Vector3(0,6,-1);
-    
-            camera.position.copy(center);
-            camera.lookAt(lookat);
-    
-            const shape = new Ammo.btCapsuleShape(6, 20);
-            this.collisionObject = new THREE.Object3D();
-    
-            this.collisionObject.userData.physicsShape = shape;
-            this.collisionObject.userData.physicsCenter = center;
-            level.addToScene(this.collisionObject, 100, 0.5);
-        } else {
-            camera.position.set(0,100,100);
-            camera.lookAt(0,0,0);
+        this.mouseDown = false;
 
-            document.addEventListener( 'keydown', this.onKeyDown, false );
-            document.addEventListener( 'keyup', this.onKeyUp, false );
-            document.addEventListener( 'mousemove', this.onMousMove, false );
+        camera.position.set(0,100,100);
+        camera.lookAt(0,0,0);
 
-            this.currentIntersection = null;
-        }
-    }
+        document.addEventListener( 'mousedown', this.onMouseDown, false );
+        document.addEventListener( 'mouseup', this.onMouseUp, false );
+        document.addEventListener( 'keydown', this.onKeyDown, false );
+        document.addEventListener( 'keyup', this.onKeyUp, false );
+        document.addEventListener( 'mousemove', this.onMousMove, false );
 
-    acquirePointerLock = (event) => {
-        if(this.controls.enabled) {
-
-            const pitchObject = this.controls.getObject().children[0];
-            const gunPos = new THREE.Vector3(2,6,-7);
-            gunPos.applyQuaternion(pitchObject.getWorldQuaternion());
-            gunPos.add(this.controls.getObject().position);
-
-            this.level.addBall(gunPos).onLoad = (ball) => {
-                
-                const rotatedImpulse = new THREE.Vector3(0,0,-50);
-                rotatedImpulse.applyQuaternion(pitchObject.getWorldQuaternion());
-
-                const impulse = new Ammo.btVector3(rotatedImpulse.x, rotatedImpulse.y, rotatedImpulse.z);
-                const pos = new Ammo.btVector3(0, 0, 0);
-                ball.userData.physicsBody.applyImpulse(impulse, pos);
-            }
-        } else {
-            const element = document.body;
-            element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-            element.requestPointerLock();    
-        }
-    }
-
-    pointerLockChange = (event) => {
-        const element = document.body;
-        if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-            this.controls.enabled = true;
-        } else {
-            this.controls.enabled = false;
-        }
+        this.currentIntersection = null;
     }
 
     onKeyDown = (event) => {
@@ -114,8 +56,6 @@ export default class Input {
                 this.movement.right = true;
                 break;
             case 32: // space
-                if (this.canJump) this.velocity.y += 350;
-                this.canJump = false;
                 break;
         }
     }
@@ -139,6 +79,15 @@ export default class Input {
                 this.movement.right = false;
                 break;
         }
+    }
+
+    onMouseDown = (event) => {
+        this.mouseDown = true;
+        this.riseTimer = this.riseTime;
+    }
+
+    onMouseUp = (event) => {
+        this.mouseDown = false;
     }
 
     onMousMove = (event) => {
@@ -179,57 +128,20 @@ export default class Input {
     }
 
     update(delta) {
-        if (this.type === 'PointerLockControls' && this.controls.enabled) {
+        this.controls.update();
 
-            const object = this.controls.getObject();
-            this.raycaster.ray.origin.copy( this.controls.getObject().position );
-            this.raycaster.ray.origin.y -= 10;
-            const intersections = this.raycaster.intersectObjects( this.level.scene.children );
-            const onObject = intersections.length > 0;
-            
-            this.velocity.x -= this.velocity.x * 10.0 * delta;
-            this.velocity.z -= this.velocity.z * 10.0 * delta;
-            this.velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-            
-            this.direction.z = Number( this.movement.forward ) - Number( this.movement.backward );
-            this.direction.x = Number( this.movement.left ) - Number( this.movement.right );
-            
-            this.direction.normalize(); // this ensures consistent movements in all directions
-            if ( this.movement.forward || this.movement.backward ) this.velocity.z -= this.direction.z * 400.0 * delta;
-            if ( this.movement.left || this.movement.right ) this.velocity.x -= this.direction.x * 400.0 * delta;
+        if(this.mouseDown) {
+            this.riseTimer -= delta;
+        }
+        
 
-            if ( onObject === true ) {
-                this.velocity.y = Math.max( 0, this.velocity.y );
-                this.canJump = true;
-            }
-            object.translateX( this.velocity.x * delta );
-            object.translateY( this.velocity.y * delta );
-            object.translateZ( this.velocity.z * delta );
-            if ( object.position.y < 10 ) {
-                this.velocity.y = 0;
-                object.position.y = 10;
-                this.canJump = true;
-            }
+        if(this.currentIntersection && this.riseTimer < 0) {
+            this.currentIntersection.grid.vertices.forEach(vertex => {
+                this.currentIntersection.geometry.vertices[vertex].z += 0.3;
+            });
+            this.currentIntersection.geometry.verticesNeedUpdate = true;
 
-            var transform = new Ammo.btTransform();
-            transform.setIdentity();
-            transform.setOrigin( new Ammo.btVector3( object.position.x, object.position.y, object.position.z ) );
-            transform.setRotation( new Ammo.btQuaternion( object.quaternion.x, object.quaternion.y, object.quaternion.z, object.quaternion.w ) );
-
-            this.collisionObject.userData.physicsBody.setCenterOfMassTransform(transform);
-            this.collisionObject.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(this.velocity.x, this.velocity.y, this.velocity.z));
-        } else {
-            this.controls.update();
-
-            if(this.movement.forward && this.currentIntersection) {
-                this.currentIntersection.geometry.vertices[this.currentIntersection.face.a].z += 0.1;
-                this.currentIntersection.geometry.vertices[this.currentIntersection.face.b].z += 0.1;
-                this.currentIntersection.geometry.vertices[this.currentIntersection.face.c].z += 0.1;
-
-                this.currentIntersection.geometry.verticesNeedUpdate = true;
-            }
-
-            
+            this.riseTimer = this.riseTime;
         }
     }
 }

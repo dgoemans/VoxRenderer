@@ -57,11 +57,17 @@ export default class Terrain {
                 this.grid[faceCenter.y][faceCenter.x] = {
                     decor: decor,
                     height: height,
-                    faces: []
+                    faces: [],
+                    vertices: []
                 };
             }
 
             this.grid[faceCenter.y][faceCenter.x].faces.push(index);
+            this.grid[faceCenter.y][faceCenter.x].vertices.push(face.a, face.b, face.c);
+
+            this.grid[faceCenter.y][faceCenter.x].vertices = this.grid[faceCenter.y][faceCenter.x].vertices.filter(
+                (element, index, arr) => arr.indexOf(element) === index
+            );
         });
 
         const floorMaterial = new THREE.MeshPhysicalMaterial({

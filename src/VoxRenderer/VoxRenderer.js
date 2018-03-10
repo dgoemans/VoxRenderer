@@ -29,7 +29,7 @@ export default class VoxRenderer {
 
         document.body.appendChild( this.renderer.domElement );
 
-        this.level = new Level(this.renderer, this.physics);
+        this.level = new Level(this.renderer, this.physics, this.camera);
 
         this.input = new Input(this.camera, this.level);
 

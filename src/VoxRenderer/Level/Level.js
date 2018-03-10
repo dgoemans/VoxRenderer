@@ -9,12 +9,14 @@ import VoxModelLoader from '../VoxModel/VoxModelLoader';
 import SimplexNoise from 'simplex-noise';
 import TreeGrid from '../Objects/TreeGrid';
 import Terrain from '../Objects/Terrain';
+import EditMode from './EditMode/EditMode';
 
 export default class Level {
-    constructor(renderer, physics) {
+    constructor(renderer, physics, camera) {
 
         this.physics = physics;
         this.renderer = renderer;
+        this.camera = camera;
 
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2( 0x1f2125, 0.0015 );
@@ -23,6 +25,106 @@ export default class Level {
         this.scene.add( light );
 
         this.terrain = new Terrain(this);
+        
+        this.riseTime = 0.2;
+        this.riseTimer = this.riseTime;
+
+        this.mouseDown = false;
+
+        this.movement = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+
+        this.editMode = EditMode.RaiseTerrain;
+
+        this.currentIntersection = null;
+        this.raycaster = new THREE.Raycaster();
+    }
+
+    onMouseDown(pos) {
+        this.mouseDown = true;
+    }
+
+    onMouseMove(pos) {
+        const intersects = this.getIntersects(pos, this.terrain.mesh);
+        if (intersects.length > 0) {
+
+            const mesh = intersects[0].object;
+            const geometry = mesh.geometry;
+
+            if(this.currentIntersection) {
+                this.currentIntersection.grid.faces.forEach(face => geometry.faces[face].materialIndex = 0);
+                this.currentIntersection.geometry.groupsNeedUpdate = true;
+            }
+
+            const grid = this.terrain.getGrid(intersects[0].point.x, intersects[0].point.z);
+
+            grid.faces.forEach(face => geometry.faces[face].materialIndex = 1);
+
+            mesh.geometry.verticesNeedUpdate = true;
+            mesh.geometry.groupsNeedUpdate = true;
+
+            this.currentIntersection = {
+                geometry: geometry,
+                grid:  grid
+            }
+        }
+    }
+
+    onMouseUp(pos) {
+        this.mouseDown = false;
+    }
+
+    onKeyDown(keycode) {
+        switch ( keycode ) {
+            case 38: // up
+            case 87: // w
+                this.movement.forward = true;
+                break;
+            case 37: // left
+            case 65: // a
+                this.movement.left = true; 
+                break;
+            case 40: // down
+            case 83: // s
+                this.movement.backward = true;
+                break;
+            case 39: // right
+            case 68: // d
+                this.movement.right = true;
+                break;
+            case 32: // space
+                break;
+        }
+    }
+
+    onKeyUp(keycode) {
+        switch( keycode ) {
+            case 38: // up
+            case 87: // w
+                this.movement.forward = false;
+                break;
+            case 37: // left
+            case 65: // a
+                this.movement.left = false;
+                break;
+            case 40: // down
+            case 83: // s
+                this.movement.backward = false;
+                break;
+            case 39: // right
+            case 68: // d
+                this.movement.right = false;
+                break;
+        }
+    }
+
+    getIntersects(pos, object) {
+        this.raycaster.setFromCamera(pos, this.camera);
+        return this.raycaster.intersectObject(object);
     }
 
     async addLamps() {
@@ -58,12 +160,6 @@ export default class Level {
     }
 
     update(delta, totalElapsed) {
-        /*if(totalElapsed > 5 && totalElapsed < 30 && Math.random() < 0.05) {
-            const angle = Math.random() * Math.PI * 2
-            const radius = 20;
-            const x = radius*Math.cos(angle);
-            const z = radius*Math.sin(angle);
-            this.addBall(new THREE.Vector3(x,105,z));
-        }*/
+
     }
 }

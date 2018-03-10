@@ -4,21 +4,19 @@ import 'three/examples/js/controls/OrbitControls';
 import 'three/examples/js/libs/ammo';
 
 export default class Input {
-    constructor(camera, level) {
-
+    constructor(level) {
         this.level = level;
-        this.camera = camera;
-        
-        this.controls = new THREE.OrbitControls(camera);
-
-        camera.position.set(0,100,100);
-        camera.lookAt(0,0,0);
 
         document.addEventListener( 'mousedown', this.onMouseDown, false );
         document.addEventListener( 'mouseup', this.onMouseUp, false );
         document.addEventListener( 'keydown', this.onKeyDown, false );
         document.addEventListener( 'keyup', this.onKeyUp, false );
         document.addEventListener( 'mousemove', this.onMousMove, false );
+        document.addEventListener( 'wheel', this.onMouseWheel, false );
+    }
+
+    onMouseWheel = (event) => {
+        this.level.onWheel(event.deltaY);
     }
 
     onKeyDown = (event) => {
@@ -55,6 +53,5 @@ export default class Input {
     }
 
     update(delta) {
-        this.controls.update();
     }
 }

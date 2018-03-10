@@ -31,7 +31,7 @@ export default class VoxRenderer {
 
         this.level = new Level(this.renderer, this.physics, this.camera);
 
-        this.input = new Input(this.camera, this.level);
+        this.input = new Input(this.level);
 
         this.shadowRefreshTimer = SHADOW_REFRESH_TIME;
 

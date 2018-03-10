@@ -10,6 +10,7 @@ import SimplexNoise from 'simplex-noise';
 import TreeGrid from '../Objects/TreeGrid';
 import Terrain from '../Objects/Terrain';
 import EditMode from './EditMode/EditMode';
+import Controls, { Directions } from '../Controls';
 
 export default class Level {
     constructor(renderer, physics, camera) {
@@ -26,26 +27,22 @@ export default class Level {
 
         this.terrain = new Terrain(this);
         
-        this.riseTime = 0.2;
-        this.riseTimer = this.riseTime;
-
         this.mouseDown = false;
 
-        this.movement = {
-            forward: false,
-            backward: false,
-            left: false,
-            right: false
-        };
-
         this.editMode = EditMode.RaiseTerrain;
+
+        this.controls = new Controls(this.camera);
 
         this.currentIntersection = null;
         this.raycaster = new THREE.Raycaster();
     }
 
+    onWheel(delta) {
+        this.controls.zoom(delta);
+    }
+
     onMouseDown(pos) {
-        this.mouseDown = true;
+        this.editMode.start(this.currentIntersection, this, pos);
     }
 
     onMouseMove(pos) {
@@ -70,31 +67,40 @@ export default class Level {
             this.currentIntersection = {
                 geometry: geometry,
                 grid:  grid
+            };
+
+            if(this.editMode.isActive()) {
+                this.editMode.start(this.currentIntersection, this, pos);
             }
         }
     }
 
     onMouseUp(pos) {
-        this.mouseDown = false;
+        this.editMode.stop(this.currentIntersection, this, pos);
     }
 
     onKeyDown(keycode) {
         switch ( keycode ) {
             case 38: // up
-            case 87: // w
-                this.movement.forward = true;
+                this.controls.move(Directions.Forward);
                 break;
             case 37: // left
-            case 65: // a
-                this.movement.left = true; 
+                this.controls.move(Directions.Left);
                 break;
             case 40: // down
-            case 83: // s
-                this.movement.backward = true;
+                this.controls.move(Directions.Backward);
                 break;
             case 39: // right
-            case 68: // d
-                this.movement.right = true;
+                this.controls.move(Directions.Right);
+                break;
+            case 81: // q
+                this.editMode = EditMode.RaiseTerrain;
+                break;
+            case 87: // w
+                this.editMode = EditMode.LowerTerrain;
+                break;
+            case 69: // e
+                this.editMode = EditMode.SmoothTerrain;
                 break;
             case 32: // space
                 break;
@@ -104,20 +110,16 @@ export default class Level {
     onKeyUp(keycode) {
         switch( keycode ) {
             case 38: // up
-            case 87: // w
-                this.movement.forward = false;
+                this.controls.stop(Directions.Forward);
                 break;
             case 37: // left
-            case 65: // a
-                this.movement.left = false;
+                this.controls.stop(Directions.Left);
                 break;
             case 40: // down
-            case 83: // s
-                this.movement.backward = false;
+                this.controls.stop(Directions.Backward);
                 break;
             case 39: // right
-            case 68: // d
-                this.movement.right = false;
+                this.controls.stop(Directions.Right);
                 break;
         }
     }
@@ -160,6 +162,7 @@ export default class Level {
     }
 
     update(delta, totalElapsed) {
-
+        this.editMode && this.editMode.update(delta);
+        this.controls.update(delta);
     }
 }

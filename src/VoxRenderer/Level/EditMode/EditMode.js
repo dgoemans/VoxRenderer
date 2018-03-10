@@ -1,8 +1,10 @@
+import ModifyTerrain from "./ModifyTerrain";
 
-export default EditMode = {
-    RaiseTerrain: 0,
-    SmoothTerrain: 1,
-    SinkTerrain: 2,
+
+export default {
+    RaiseTerrain: new ModifyTerrain('raise'),
+    SmoothTerrain: new ModifyTerrain('smooth'),
+    LowerTerrain: new ModifyTerrain('lower'),
     SelectPath: 3,
     SelectSingle: 4
 };

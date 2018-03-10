@@ -29,12 +29,17 @@ export default class Level {
         
         this.mouseDown = false;
 
-        this.editMode = EditMode.RaiseTerrain;
+        this.editMode = EditMode.SelectPath;
 
         this.controls = new Controls(this.camera);
 
         this.currentIntersection = null;
         this.raycaster = new THREE.Raycaster();
+
+        this.roadTextures = {
+            Straight: new THREE.TextureLoader().load('./textures/road_straight.png'),
+            Corner: new THREE.TextureLoader().load('./textures/road_corner.png'),
+        };
     }
 
     onWheel(delta) {
@@ -129,6 +134,90 @@ export default class Level {
     getIntersects(pos, object) {
         this.raycaster.setFromCamera(pos, this.camera);
         return this.raycaster.intersectObject(object);
+    }
+
+    tilesSelected(tiles) {
+        const geometry = new THREE.Geometry();
+        const floorGeometry = this.terrain.mesh.geometry;
+
+        let index = 0;
+
+        tiles.forEach((tile, i) => {
+            tile.vertices.forEach(vertex => {
+                const newVertex = floorGeometry.vertices[vertex].clone();
+                newVertex.applyEuler(this.terrain.mesh.rotation);
+                geometry.vertices.push(newVertex);
+            });
+
+            const uvs = this.getUvs(tiles, i);
+            uvs.forEach(uv => geometry.faceVertexUvs[0].push(uv));
+
+            geometry.faces.push( new THREE.Face3(index, index+1, index+2));
+            geometry.faces.push( new THREE.Face3(index+2, index+1, index+3));
+            geometry.faces.forEach(face => face.materialIndex = 0);
+
+            index += 4;
+        });
+
+        geometry.computeFaceNormals();
+        geometry.computeVertexNormals();
+
+        const straight = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            flatShading: true,
+            roughness: 1.0,
+            metalness: 0.0,
+            clearCoat: 0.0,
+            clearCoatRoughness: 1.0,
+            reflectivity: 0.0,
+            transparent: true,
+            opacity: 1.0,
+            map: this.roadTextures.Straight,
+        });
+
+        const corner = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            flatShading: true,
+            roughness: 1.0,
+            metalness: 0.0,
+            clearCoat: 0.0,
+            clearCoatRoughness: 1.0,
+            reflectivity: 0.0,
+            transparent: true,
+            opacity: 1.0,
+            map: this.roadTextures.Straight,
+        });
+
+        const mesh = new THREE.Mesh(geometry, [straight, corner]);
+        this.scene.add(mesh);
+    }
+
+    getUvs(tiles, index) {
+        const tile = tiles[index];
+        const prev = (index > 0) ? tiles[index-1] : tile;;
+        const next = (index+1 < tiles.length) ? tiles[index+1] : tile;
+
+        const uvs = [];
+
+        if(prev.y === tile.y && tile.y === next.y) {
+            uvs.push([new THREE.Vector2(0,0),
+                new THREE.Vector2(1,0),
+                new THREE.Vector2(0,1)]);
+    
+            uvs.push([new THREE.Vector2(0,1),
+                    new THREE.Vector2(1,0),
+                    new THREE.Vector2(1,1)]);    
+        } else if(prev.x === tile.x && tile.x === next.x) {
+            uvs.push([new THREE.Vector2(0,0),
+                new THREE.Vector2(0,1),
+                new THREE.Vector2(1,0)]);
+    
+            uvs.push([new THREE.Vector2(1,0),
+                    new THREE.Vector2(0,1),
+                    new THREE.Vector2(1,1)]);
+        }
+
+        return uvs;
     }
 
     async addLamps() {

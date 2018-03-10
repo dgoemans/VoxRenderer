@@ -16,7 +16,6 @@ export default class Terrain {
         const totalHeight = this.tileSize * tilesHigh;
 
         var simplex = new SimplexNoise(Math.random);
-        const geometry = new THREE.Geometry();
 
         let index = 0;
 
@@ -50,7 +49,6 @@ export default class Terrain {
             if(value > 0.7) {
                 decor = new TreeGrid(level, new THREE.Vector3(faceCenter.x, faceCenter.z, faceCenter.y));
             }
-
 
             if(!this.grid[faceCenter.y]) this.grid[faceCenter.y] = [];
             if(!this.grid[faceCenter.y][faceCenter.x]) {

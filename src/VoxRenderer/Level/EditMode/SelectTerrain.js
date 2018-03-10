@@ -48,7 +48,9 @@ export default class SelectTerrain {
     }
 
     deactivate(intersection, level, pos) {
+        this.level.tilesSelected(this.line);
         this.colorLine(0);
+        this.level = null;
         this.line = [];
         this.startIntersection = null;
         this.currentIntersection = null;

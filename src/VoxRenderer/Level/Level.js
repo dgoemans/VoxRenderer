@@ -42,7 +42,7 @@ export default class Level {
     }
 
     onMouseDown(pos) {
-        this.editMode.start(this.currentIntersection, this, pos);
+        this.editMode.activate(this.currentIntersection, this, pos);
     }
 
     onMouseMove(pos) {
@@ -61,7 +61,6 @@ export default class Level {
 
             grid.faces.forEach(face => geometry.faces[face].materialIndex = 1);
 
-            mesh.geometry.verticesNeedUpdate = true;
             mesh.geometry.groupsNeedUpdate = true;
 
             this.currentIntersection = {
@@ -70,13 +69,13 @@ export default class Level {
             };
 
             if(this.editMode.isActive()) {
-                this.editMode.start(this.currentIntersection, this, pos);
+                this.editMode.activate(this.currentIntersection, this, pos);
             }
         }
     }
 
     onMouseUp(pos) {
-        this.editMode.stop(this.currentIntersection, this, pos);
+        this.editMode.deactivate(this.currentIntersection, this, pos);
     }
 
     onKeyDown(keycode) {
@@ -101,6 +100,9 @@ export default class Level {
                 break;
             case 69: // e
                 this.editMode = EditMode.SmoothTerrain;
+                break;
+            case 65: // a
+                this.editMode = EditMode.SelectPath;
                 break;
             case 32: // space
                 break;

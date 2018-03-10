@@ -58,7 +58,9 @@ export default class Terrain {
                     decor: decor,
                     height: height,
                     faces: [],
-                    vertices: []
+                    vertices: [],
+                    x: faceCenter.x,
+                    y: faceCenter.y,
                 };
             }
 

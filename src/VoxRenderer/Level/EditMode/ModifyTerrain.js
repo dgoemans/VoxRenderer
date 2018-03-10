@@ -9,11 +9,11 @@ export default class ModifyTerrain {
         this.currentIntersection = null;
     }
 
-    start(intersection, level, pos) {
+    activate(intersection, level, pos) {
         this.currentIntersection = intersection;
     }
 
-    stop() {
+    deactivate() {
         this.currentIntersection = null;
         this.modifyTimer = ModifyTime;
     }

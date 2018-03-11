@@ -5,15 +5,45 @@ export default class TownGenerator {
     constructor(level) {
         this.level = level;
 
+        this.texture = new THREE.TextureLoader().load('./textures/roads.png');
+
+        this.loader = new THREE.OBJLoader();
+
+        this.buildingMeshes = [];
+
+        Promise.all([
+           this.loadObj('./models/building_1.obj'),
+           this.loadObj('./models/building_2.obj'), 
+        ]).then(() => {
+            this.generateTowns();
+        });
+    }
+
+    loadObj(path) {
+        return new Promise((resolve) => {
+            this.loader.load(path, (object) => {
+                object.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.material.map = this.texture;
+                    }
+                });
+    
+                this.buildingMeshes.push(object);
+                resolve();
+            });    
+        });
+    }
+
+    generateTowns() {
         for(let i=0; i<30; i++) {
             const size = Math.round(4 + Math.random() * 12);
-            const maxWidth = 3000 - (size+2) * level.terrain.tileSize;
+            const maxWidth = 3000 - (size*2) * this.level.terrain.tileSize;
 
             let x = Math.random() * maxWidth - maxWidth/2;
-            x = Math.round(x/level.terrain.tileSize)*level.terrain.tileSize;
+            x = Math.round(x/this.level.terrain.tileSize)*this.level.terrain.tileSize;
 
             let y = Math.random() * maxWidth - maxWidth/2;
-            y = Math.round(y/level.terrain.tileSize)*level.terrain.tileSize;
+            y = Math.round(y/this.level.terrain.tileSize)*this.level.terrain.tileSize;
 
             this.generateTown(size, x, y);
         }
@@ -66,10 +96,13 @@ export default class TownGenerator {
                 const tile = this.level.terrain.grid[centerY+y*tileSize][centerX+x*tileSize];
                 const roadAdjacent = this.hasRoadAdjacent(centerX+x*tileSize, centerY+y*tileSize);
                 if(!tile.road && !tile.building && roadAdjacent && Math.random() < 0.9) {
-                    const buildingHeight = Math.random() * 5 * tileSize + tileSize;
-                    const geometry = new THREE.BoxBufferGeometry(tileSize, buildingHeight, tileSize);
-                    tile.building = new THREE.Mesh(geometry, this.buildingMaterial);
-                    tile.building.position.set(x*tileSize + centerX + tileSize/2, tile.height, y*tileSize + centerY + tileSize/2);
+                    const buildingIndex = Math.floor(Math.random() * this.buildingMeshes.length);
+                    tile.building = this.buildingMeshes[buildingIndex].clone();
+                    const vertices = this.level.terrain.mesh.geometry.vertices;
+
+                    const height = tile.vertices.reduce((value, vertex) => Math.min(value, vertices[vertex].z));
+
+                    tile.building.position.set(x*tileSize + centerX + tileSize/2, height, y*tileSize + centerY + tileSize/2);
                     this.level.addToScene(tile.building);
                 }
             }

@@ -46,7 +46,7 @@ export default class Controls {
     }
 
     update(delta) {
-        const MovementSpeed = 15;
+        const MovementSpeed = 100;
 
         if(this.movements.Left) {
             this.camera.position.x -= MovementSpeed*delta;

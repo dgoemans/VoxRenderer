@@ -11,6 +11,7 @@ import TreeGrid from '../Objects/TreeGrid';
 import Terrain from '../Objects/Terrain';
 import EditMode from './EditMode/EditMode';
 import Controls, { Directions } from '../Controls';
+import TownGenerator from './TownGenerator';
 
 export default class Level {
     constructor(renderer, physics, camera) {
@@ -37,6 +38,8 @@ export default class Level {
         this.raycaster = new THREE.Raycaster();
 
         this.road = new Road(this);
+
+        this.townGenerator = new TownGenerator(this);
     }
 
     onWheel(delta) {
@@ -134,7 +137,7 @@ export default class Level {
     }
 
     tilesSelected(tiles) {
-        this.road.setTiles(tiles);
+        this.road.addTiles(tiles);
     }
 
     addToScene(mesh, mass = 1, restitution = 0) {

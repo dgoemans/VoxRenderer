@@ -27,7 +27,7 @@ export default class Road {
         this.level = level;
     }
 
-    fillGrid (tiles) {
+    addToGrid (tiles) {
         const grid = this.level.terrain.grid;
 
         tiles.forEach(tile => {
@@ -35,12 +35,12 @@ export default class Road {
         });
     }
 
-    setTiles(tiles) {
+    addTiles(tiles) {
         const geometry = this.mesh.geometry;
         const terrainMesh = this.level.terrain.mesh;
         const grid = this.level.terrain.grid;
 
-        this.fillGrid(tiles);
+        this.addToGrid(tiles);
 
         let index = 0;
 
@@ -94,11 +94,7 @@ export default class Road {
         // 0,1,2
         // 2,1,3
 
-        console.log(tile.x, tile.y);
-        console.log(up, down, left, right);
-
         if(up && down && left && right) {
-            console.log('Intersection');
             uvs.push([new THREE.Vector2(uvSize,uvSize),
                 new THREE.Vector2(1,uvSize),
                 new THREE.Vector2(uvSize,0)]);
@@ -107,7 +103,6 @@ export default class Road {
                     new THREE.Vector2(1,uvSize),
                     new THREE.Vector2(1,0)]);
         } else if(up && right && left) {
-            console.log('Up T Section');
             uvs.push([new THREE.Vector2(0,0),
                 new THREE.Vector2(0,uvSize),
                 new THREE.Vector2(uvSize,0)]);
@@ -116,7 +111,6 @@ export default class Road {
                     new THREE.Vector2(0,uvSize),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(down && right && left) {
-            console.log('Down T Section');
             uvs.push([new THREE.Vector2(0,uvSize),
                 new THREE.Vector2(0,0),
                 new THREE.Vector2(uvSize,uvSize)]);
@@ -125,7 +119,6 @@ export default class Road {
                     new THREE.Vector2(0,0),
                     new THREE.Vector2(uvSize,0)]);
         } else if(down && up && left) {
-            console.log('Left T Section');
             uvs.push([new THREE.Vector2(uvSize,0),
                 new THREE.Vector2(0, 0),
                 new THREE.Vector2(uvSize,uvSize)]);
@@ -134,7 +127,6 @@ export default class Road {
                     new THREE.Vector2(0, 0),
                     new THREE.Vector2(0,uvSize)]);
         } else if(down && up && right) {
-            console.log('Right T Section');
             uvs.push([new THREE.Vector2(0,uvSize),
                 new THREE.Vector2(uvSize, uvSize),
                 new THREE.Vector2(0,0)]);
@@ -143,7 +135,6 @@ export default class Road {
                     new THREE.Vector2(uvSize, uvSize),
                     new THREE.Vector2(uvSize,0)]);
         } else if(up && down) {
-            console.log('Vertical Straight');
             uvs.push([new THREE.Vector2(0,1),
                 new THREE.Vector2(0,uvSize),
                 new THREE.Vector2(uvSize,1)]);
@@ -152,7 +143,6 @@ export default class Road {
                     new THREE.Vector2(0,uvSize),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(left && right) {
-            console.log('Horizontal Straight');
             uvs.push([new THREE.Vector2(0,1),
                 new THREE.Vector2(uvSize,1),
                 new THREE.Vector2(0,uvSize)]);
@@ -161,7 +151,6 @@ export default class Road {
                     new THREE.Vector2(uvSize,1),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(up && left) {
-            console.log('Up Left bend');
             uvs.push([new THREE.Vector2(1,uvSize),
                 new THREE.Vector2(1,1),
                 new THREE.Vector2(uvSize,uvSize)]);
@@ -170,7 +159,6 @@ export default class Road {
                     new THREE.Vector2(1,1),
                     new THREE.Vector2(uvSize,1)]);
         } else if(up && right) {
-            console.log('Up Right Bend');
             uvs.push([new THREE.Vector2(1,1),
                 new THREE.Vector2(uvSize,1),
                 new THREE.Vector2(1,uvSize)]);
@@ -179,7 +167,6 @@ export default class Road {
                     new THREE.Vector2(uvSize,1),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(down && left) {
-            console.log('Down Left bend');
             uvs.push([new THREE.Vector2(1,1),
                 new THREE.Vector2(1,uvSize),
                 new THREE.Vector2(uvSize,1)]);
@@ -188,7 +175,6 @@ export default class Road {
                     new THREE.Vector2(1,uvSize),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(down && right) {
-            console.log('Down Right Bend');
             uvs.push([new THREE.Vector2(uvSize,1),
                 new THREE.Vector2(1,1),
                 new THREE.Vector2(uvSize,uvSize)]);
@@ -197,7 +183,6 @@ export default class Road {
                     new THREE.Vector2(1,1),
                     new THREE.Vector2(1,uvSize)]);
         } else if(up || down) {
-            console.log('Vertical Straight Cap');
             uvs.push([new THREE.Vector2(0,1),
                 new THREE.Vector2(0,uvSize),
                 new THREE.Vector2(uvSize,1)]);
@@ -206,13 +191,21 @@ export default class Road {
                     new THREE.Vector2(0,uvSize),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else if(left || right) {
-            console.log('Horizontal Straight Cap');
             uvs.push([new THREE.Vector2(0,1),
                 new THREE.Vector2(uvSize,1),
                 new THREE.Vector2(0,uvSize)]);
     
             uvs.push([new THREE.Vector2(0,uvSize),
                     new THREE.Vector2(uvSize,1),
+                    new THREE.Vector2(uvSize,uvSize)]);
+        } else {
+            console.log('Unknown road type');
+            uvs.push([new THREE.Vector2(0,1),
+                new THREE.Vector2(1,1),
+                new THREE.Vector2(0,uvSize)]);
+    
+            uvs.push([new THREE.Vector2(0,uvSize),
+                    new THREE.Vector2(0,1),
                     new THREE.Vector2(uvSize,uvSize)]);
         }
 

@@ -7,8 +7,8 @@ export default class Terrain {
     constructor(level) {
         this.grid = [];
 
-        const tilesWide = 100;
-        const tilesHigh = 100;
+        const tilesWide = 200;
+        const tilesHigh = 200;
 
         this.tileSize = 10;
 
@@ -47,7 +47,7 @@ export default class Terrain {
 
             let decor = null;
             if(value > 0.7) {
-                decor = new TreeGrid(level, new THREE.Vector3(faceCenter.x, faceCenter.z, faceCenter.y));
+                //decor = new TreeGrid(level, new THREE.Vector3(faceCenter.x, faceCenter.z, faceCenter.y));
             }
 
             if(!this.grid[faceCenter.y]) this.grid[faceCenter.y] = [];

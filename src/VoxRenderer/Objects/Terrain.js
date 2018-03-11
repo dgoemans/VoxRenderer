@@ -55,6 +55,7 @@ export default class Terrain {
                 this.grid[faceCenter.y][faceCenter.x] = {
                     decor: decor,
                     height: height,
+                    road: null,
                     faces: [],
                     vertices: [],
                     x: faceCenter.x,

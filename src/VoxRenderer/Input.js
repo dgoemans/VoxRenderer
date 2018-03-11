@@ -16,15 +16,15 @@ export default class Input {
     }
 
     onMouseWheel = (event) => {
-        this.level.onWheel(event.deltaY);
+        this.level.onWheel(event.deltaY, event.shiftKey, event.ctrlKey);
     }
 
     onKeyDown = (event) => {
-        this.level.onKeyDown(event.keyCode);
+        this.level.onKeyDown(event.keyCode, event.shiftKey, event.ctrlKey);
     }
     
     onKeyUp = (event) => {
-        this.level.onKeyUp(event.keyCode);
+        this.level.onKeyUp(event.keyCode, event.shiftKey, event.ctrlKey);
     }
 
     convertMouseToViewport(event) {
@@ -37,19 +37,19 @@ export default class Input {
     onMouseDown = (event) => {
         event.preventDefault();
         const viewport = this.convertMouseToViewport(event);
-        this.level.onMouseDown(viewport);
+        this.level.onMouseDown(viewport, event.shiftKey, event.ctrlKey);
     }
 
     onMouseUp = (event) => {
         event.preventDefault();
         const viewport = this.convertMouseToViewport(event);
-        this.level.onMouseUp(viewport);
+        this.level.onMouseUp(viewport, event.shiftKey, event.ctrlKey);
     }
 
     onMousMove = (event) => {
         event.preventDefault();
         const viewport = this.convertMouseToViewport(event);
-        this.level.onMouseMove(viewport);
+        this.level.onMouseMove(viewport, event.shiftKey, event.ctrlKey);
     }
 
     update(delta) {

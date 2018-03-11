@@ -20,7 +20,6 @@ export default class TownGenerator {
     }
 
     generateTown(size, x, y) {
-        console.log(size,x,y);
         const tileSize = this.level.terrain.tileSize;
 
         const direction = (Math.random() > 0.5) ? 'vertical' : 'horizontal';

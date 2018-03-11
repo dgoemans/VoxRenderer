@@ -47,7 +47,7 @@ export default class Level {
     }
 
     onMouseDown(pos) {
-        this.editMode.activate(this.currentIntersection, this, pos);
+        this.currentIntersection && this.editMode.activate(this.currentIntersection, this, pos);
     }
 
     onMouseMove(pos) {
@@ -80,22 +80,22 @@ export default class Level {
     }
 
     onMouseUp(pos) {
-        this.editMode.deactivate(this.currentIntersection, this, pos);
+        this.currentIntersection && this.editMode.deactivate(this.currentIntersection, this, pos);
     }
 
-    onKeyDown(keycode) {
+    onKeyDown(keycode, shift, ctrl) {
         switch ( keycode ) {
             case 38: // up
-                this.controls.move(Directions.Forward);
+                this.controls.move(Directions.Forward, shift);
                 break;
             case 37: // left
-                this.controls.move(Directions.Left);
+                this.controls.move(Directions.Left, shift);
                 break;
             case 40: // down
-                this.controls.move(Directions.Backward);
+                this.controls.move(Directions.Backward, shift);
                 break;
             case 39: // right
-                this.controls.move(Directions.Right);
+                this.controls.move(Directions.Right, shift);
                 break;
             case 81: // q
                 this.editMode = EditMode.RaiseTerrain;
@@ -110,23 +110,24 @@ export default class Level {
                 this.editMode = EditMode.SelectPath;
                 break;
             case 32: // space
+                this.controls.rotate(shift ? -1 : 1);
                 break;
         }
     }
 
-    onKeyUp(keycode) {
+    onKeyUp(keycode, shift, ctrl) {
         switch( keycode ) {
             case 38: // up
-                this.controls.stop(Directions.Forward);
+                this.controls.stop(Directions.Forward, shift);
                 break;
             case 37: // left
-                this.controls.stop(Directions.Left);
+                this.controls.stop(Directions.Left, shift);
                 break;
             case 40: // down
-                this.controls.stop(Directions.Backward);
+                this.controls.stop(Directions.Backward, shift);
                 break;
             case 39: // right
-                this.controls.stop(Directions.Right);
+                this.controls.stop(Directions.Right, shift);
                 break;
         }
     }

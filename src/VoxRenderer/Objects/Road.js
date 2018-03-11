@@ -68,6 +68,7 @@ export default class Road {
                     tile.vertices.forEach(vertex => {
                         const newVertex = terrainMesh.geometry.vertices[vertex].clone();
                         newVertex.applyEuler(terrainMesh.rotation);
+                        newVertex.y += 0.01;
                         geometry.vertices.push(newVertex);
                     });
     
@@ -206,13 +207,12 @@ export default class Road {
                     new THREE.Vector2(uvSize,1),
                     new THREE.Vector2(uvSize,uvSize)]);
         } else {
-            console.log('Unknown road type');
             uvs.push([new THREE.Vector2(0,1),
-                new THREE.Vector2(1,1),
+                new THREE.Vector2(uvSize,1),
                 new THREE.Vector2(0,uvSize)]);
     
             uvs.push([new THREE.Vector2(0,uvSize),
-                    new THREE.Vector2(0,1),
+                    new THREE.Vector2(uvSize,1),
                     new THREE.Vector2(uvSize,uvSize)]);
         }
 

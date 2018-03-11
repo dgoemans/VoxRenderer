@@ -7,8 +7,8 @@ export default class Terrain {
     constructor(level) {
         this.grid = [];
 
-        const tilesWide = 200;
-        const tilesHigh = 200;
+        const tilesWide = 300;
+        const tilesHigh = 300;
 
         this.tileSize = 10;
 
@@ -56,6 +56,7 @@ export default class Terrain {
                     decor: decor,
                     height: height,
                     road: null,
+                    building: null,
                     faces: [],
                     vertices: [],
                     x: faceCenter.x,

@@ -58,6 +58,13 @@ export default class Road {
                 }
                 const tile = grid[y][x];
                 if(tile && tile.road) {
+
+                    if(tile.building) {
+                        this.level.scene.remove(tile.building);
+                    } else if(tile.decor) {
+                        this.level.scene.remove(tile.decor);
+                    }
+
                     tile.vertices.forEach(vertex => {
                         const newVertex = terrainMesh.geometry.vertices[vertex].clone();
                         newVertex.applyEuler(terrainMesh.rotation);

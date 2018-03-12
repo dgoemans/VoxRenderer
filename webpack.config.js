@@ -6,7 +6,7 @@ var BUILD_DIR = path.resolve(__dirname, 'dist/');
 var APP_DIR = path.resolve(__dirname, 'src/');
 
 var config = {
-    devtool: 'cheap-source-map',
+    devtool: 'cheap-eval-source-map',
     entry: [
         'babel-polyfill',
         APP_DIR + '/index.js',

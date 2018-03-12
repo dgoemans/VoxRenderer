@@ -51,10 +51,11 @@ export default class Level {
     }
 
     onMouseMove(pos) {
-        const intersects = this.getIntersects(pos, this.terrain.mesh);
-        if (intersects.length > 0) {
+        const intersections = this.getIntersections(pos, this.terrain.mesh);
 
-            const mesh = intersects[0].object;
+        if (intersections.length > 0) {
+
+            const mesh = intersections[0].object;
             const geometry = mesh.geometry;
 
             if(this.currentIntersection) {
@@ -62,7 +63,7 @@ export default class Level {
                 this.currentIntersection.geometry.groupsNeedUpdate = true;
             }
 
-            const grid = this.terrain.getGrid(intersects[0].point.x, intersects[0].point.z);
+            const grid = this.terrain.getGrid(intersections[0].point.x, intersections[0].point.z);
 
             grid.faces.forEach(face => geometry.faces[face].materialIndex = 1);
 
@@ -132,7 +133,7 @@ export default class Level {
         }
     }
 
-    getIntersects(pos, object) {
+    getIntersections(pos, object) {
         this.raycaster.setFromCamera(pos, this.camera);
         return this.raycaster.intersectObject(object);
     }

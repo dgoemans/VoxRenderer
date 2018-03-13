@@ -42,15 +42,15 @@ export default class Level {
         this.townGenerator = new TownGenerator(this);
     }
 
-    onWheel(delta) {
+    onWheel(delta, shift, ctrl) {
         this.controls.zoom(delta);
     }
 
-    onMouseDown(pos) {
+    onMouseDown(pos, shift, ctrl) {
         this.currentIntersection && this.editMode.activate(this.currentIntersection, this, pos);
     }
 
-    onMouseMove(pos) {
+    onMouseMove(pos, shift, ctrl) {
         const intersects = this.getIntersects(pos, this.terrain.mesh);
         if (intersects.length > 0) {
 
@@ -79,7 +79,7 @@ export default class Level {
         }
     }
 
-    onMouseUp(pos) {
+    onMouseUp(pos, shift, ctrl) {
         this.currentIntersection && this.editMode.deactivate(this.currentIntersection, this, pos);
     }
 
@@ -150,5 +150,6 @@ export default class Level {
     update(delta, totalElapsed) {
         this.editMode && this.editMode.update(delta);
         this.controls.update(delta);
+        this.townGenerator.fillGaps();
     }
 }

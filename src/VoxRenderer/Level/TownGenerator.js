@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { GetLine } from './GridUtils';
 
+const Direction = {
+    Horizontal: 'horizontal',
+    Vertical: 'vertical',
+};
+
 export default class TownGenerator {
     constructor(level) {
         this.level = level;
@@ -10,6 +15,8 @@ export default class TownGenerator {
         this.loader = new THREE.OBJLoader();
 
         this.buildingMeshes = [];
+
+        this.towns = [];
 
         Promise.all([
            this.loadObj('./models/building_1.obj'),
@@ -46,16 +53,22 @@ export default class TownGenerator {
             y = Math.round(y/this.level.terrain.tileSize)*this.level.terrain.tileSize;
 
             this.generateTown(size, x, y);
+
+            this.towns.push({
+                x: x,
+                y: y,
+                size: size,
+            });
         }
     }
 
     generateTown(size, x, y) {
         const tileSize = this.level.terrain.tileSize;
 
-        const direction = (Math.random() > 0.5) ? 'vertical' : 'horizontal';
+        const direction = (Math.random() > 0.5) ? Direction.Vertical : Direction.Horizontal;
 
-        let startX = x - (direction === 'vertical' ? 0 : size/2 * tileSize);
-        let startY = y - (direction === 'horizontal' ? 0 : size/2 * tileSize);
+        let startX = x - (direction === Direction.Vertical ? 0 : size/2 * tileSize);
+        let startY = y - (direction === Direction.Horizontal ? 0 : size/2 * tileSize);
 
         startX = Math.round(startX/tileSize)*tileSize;
         startY = Math.round(startY/tileSize)*tileSize;
@@ -123,9 +136,9 @@ export default class TownGenerator {
             const smallSize = Math.round(size/3 + Math.random() * size/3);
             const dirSign = (Math.random() > 0.5) ? -1 : 1;
 
-            const newDirection = (direction === 'vertical') ? 'horizontal' : 'vertical';
-            const posX = newDirection === 'vertical' ? i * tileSize : 0;
-            const posY = newDirection === 'horizontal' ? i * tileSize : 0;
+            const newDirection = (direction === Direction.Vertical) ? Direction.Horizontal : Direction.Vertical;
+            const posX = newDirection === Direction.Vertical ? i * tileSize : 0;
+            const posY = newDirection === Direction.Horizontal ? i * tileSize : 0;
 
             this.generateRoad(newDirection, startX + posX, startY + posY, dirSign * smallSize);
             this.generateRoadSubSystems(newDirection, startX + posX, startY + posY, smallSize);
@@ -144,5 +157,18 @@ export default class TownGenerator {
         const line = GetLine(x, y, endX, endY, this.level.terrain.grid, this.level.terrain.tileSize);
         
         this.level.road.addTiles(line);
+    }
+
+    fillGaps() {
+        this.towns.forEach(town => {
+            const halfSize = Math.floor(town.size/2);
+            for(let y = -halfSize; y<halfSize; y++) {
+                for(let x = -halfSize; x<halfSize; x++) {
+                    const tileSize = this.level.terrain.tileSize;
+                    const tile = this.level.terrain.grid[town.y+y*tileSize][town.x+x*tileSize];
+                    //console.log(tile);
+                }
+            }    
+        });
     }
 }
